@@ -22,6 +22,26 @@
 #   docker build -t=openj9 .
 #   docker run -it openj9
 
+# cd ../usr/local/ActivePerl-5.26.3.2603-x86_64-linux-glibc-2.15-a701e55e0/
+# ./install.sh
+
+# **MAKE SURE ant-contrib.jar is in ant/lib**
+
+# export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# export JAVA_HOME=/root/openj9-openjdk-jdk12/build/linux-x86_64-server-release/jdk
+# export JAVA_BIN=$JAVA_HOME/bin
+# export PATH=$JAVA_BIN:$PATH
+# export PATH=/usr/local/apache-ant-1.10.5/bin:$PATH
+# export PATH=/usr/local/ActivePerl-5.26.3.2603-x86_64-linux-glibc-2.15-a701e55e0/bin:$PATH
+# export JDK_VERSION=12
+# export BUILD_LIST=openjdk_regression
+# export SPEC=linux_x86-64_cmprssptrs
+
+# cd /root/openjdktest/TestConfig
+# make -f run_configure.mk
+# make compile
+# make _jdk_custom
+
 FROM ubuntu:16.04
 
 # Install required OS tools
@@ -91,5 +111,24 @@ RUN cd /root \
 # Set environment variable JAVA_HOME, and prepend ${JAVA_HOME}/bin to PATH
 ENV JAVA_HOME="/root/bootjdk12"
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# Download and install ant
+RUN cd /usr/local \
+&& wget -O apache-ant-1.10.5-bin.tar.gz "http://us.mirrors.quenda.co/apache//ant/binaries/apache-ant-1.10.5-bin.tar.gz" \
+&& tar -xzf apache-ant-1.10.5-bin.tar.gz \
+&& rm -rf apache-ant-1.10.5-bin.tar.gz
+
+# Download and install ant-contrib
+RUN cd /usr/local/apache-ant-1.10.5/lib \
+&& wget -O ant-contrib-1.0b3-bin.tar.gz "https://sourceforge.net/projects/ant-contrib/files/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.tar.gz/download" \
+&& tar -xzf ant-contrib-1.0b3-bin.tar.gz \
+&& rm -rf ant-contrib-1.0b3-bin.tar.gz
+
+# Download and install perl
+#
+RUN cd /usr/local \
+&& wget -O ActivePerl-5.26.3.2603-x86_64-linux-glibc-2.15-a701e55e0.tar.gz "https://downloads.activestate.com/ActivePerl/releases/5.26.3.2603/ActivePerl-5.26.3.2603-x86_64-linux-glibc-2.15-a701e55e0.tar.gz" \
+&& tar -xzf ActivePerl-5.26.3.2603-x86_64-linux-glibc-2.15-a701e55e0.tar.gz \
+&& rm -rf ActivePerl-5.26.3.2603-x86_64-linux-glibc-2.15-a701e55e0.tar.gz
 
 WORKDIR /root
