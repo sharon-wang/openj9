@@ -1052,6 +1052,7 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	UDATA aotThunkDataBytes;
 	UDATA indexedDataBytes;
 	UDATA unindexedDataBytes;
+	UDATA crvSnippetBytes;
 	UDATA numROMClasses;
 	UDATA numStaleClasses;
 	UDATA percStale;
@@ -1070,6 +1071,7 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	UDATA numObjects;
 	UDATA numStartupHints;
 	UDATA startupHintBytes;
+	UDATA numCRVSnippets;
 } J9SharedClassJavacoreDataDescriptor;
 
 typedef struct J9SharedStringFarm {
