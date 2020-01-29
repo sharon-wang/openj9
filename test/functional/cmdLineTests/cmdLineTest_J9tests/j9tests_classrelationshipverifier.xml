@@ -60,8 +60,14 @@
 	</test>
 
 	<test id="test -XX:+ClassRelationshipVerifierIgnoreSCC with -Xshareclasses">
-		<command>$EXE$ $XTRACE_PRINT${$J9BCVERIFY_RECORD_CLASS_RELATIONSHIP$,$J9BCVERIFY_FETCH_SNIPPETS_FROM_SCC$} $ENABLE_CLASS_RELATIONSHIP_VERIFIER$ $ENABLE_CLASS_RELATIONSHIP_VERIFIER_IGNORE_SCC$ $ENABLE_SHARED_CLASSES_CACHE$ $CLASS_A$</command>
+		<command>$EXE$ $XTRACE_PRINT${j9bcverify.123-168} $ENABLE_CLASS_RELATIONSHIP_VERIFIER$ $ENABLE_CLASS_RELATIONSHIP_VERIFIER_IGNORE_SCC$ $ENABLE_SHARED_CLASSES_CACHE$ $CLASS_A$</command>
 		<output type="success" regex="no">recordClassRelationship</output>
 		<output type="failure" regex="no">fetchClassRelationshipSnippetsFromSharedCache</output>
 	</test>
+
+	<!-- <test id="test -XX:+ClassRelationshipVerifierIgnoreSCC with -Xshareclasses">
+		<command>$EXE$ $XTRACE_PRINT${$J9BCVERIFY_RECORD_CLASS_RELATIONSHIP$,$J9BCVERIFY_FETCH_SNIPPETS_FROM_SCC$} $ENABLE_CLASS_RELATIONSHIP_VERIFIER$ $ENABLE_CLASS_RELATIONSHIP_VERIFIER_IGNORE_SCC$ $ENABLE_SHARED_CLASSES_CACHE$ $CLASS_A$</command>
+		<output type="success" regex="no">recordClassRelationship</output>
+		<output type="failure" regex="no">fetchClassRelationshipSnippetsFromSharedCache</output>
+	</test> -->
 </suite>
