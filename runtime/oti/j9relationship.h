@@ -37,15 +37,15 @@ typedef struct J9ClassRelationshipNode {
 } J9ClassRelationshipNode;
 
 typedef struct J9ClassRelationshipSnippet {
-	UDATA sourceClassNameIndex;
-	UDATA targetClassNameIndex;
+	UDATA childClassNameIndex;
+	UDATA parentClassNameIndex;
 } J9ClassRelationshipSnippet;
 
 typedef UDATA J9SharedClassRelationshipHeader;
 
 typedef struct J9SharedClassRelationshipSnippet {
-	J9SRP sourceClassName;
-	J9SRP targetClassName;
+	J9SRP childClassName;
+	J9SRP parentClassName;
 } J9SharedClassRelationshipSnippet;
 
 /* Structure used for hashtable mapping of class names to local data buffer */
@@ -60,6 +60,10 @@ typedef struct J9ClassRelationshipClassNameIndex {
 	U_32 *address; /* The address in the data buffer where the J9UTF8 is stored */
 } J9ClassRelationshipClassNameIndex;
 
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM 3 /* The approximated minumum number of class relationship nodes for a classloader */
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM_SYSTEM_CLASSLOADER 933 /* The minumum number of class relationship nodes for a System Classloader */
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM_EXTENSION_CLASSLOADER 0 /* The minumum number of class relationship nodes for an Extension Classloader */
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM_APPLICATION_CLASSLOADER 1 /* The minumum number of class relationship nodes for an Application Classloader */
 #define J9RELATIONSHIP_SNIPPET_COUNT_THRESHOLD 10 /* The estimated number of snippets typically associated with a class */
 #define J9RELATIONSHIP_SNIPPET_SINGLE 1 /* Snippet class name mapping configuration when snippetCount == 1 */
 #define J9RELATIONSHIP_SNIPPET_USE_ARRAY 2 /* Snippet class name mapping configuration when snippetCount <= J9RELATIONSHIP_SNIPPET_COUNT_THRESHOLD */
@@ -69,6 +73,6 @@ typedef struct J9ClassRelationshipClassNameIndex {
 
 /* Bits for J9ClassRelationship flags field */
 #define J9RELATIONSHIP_MUST_BE_INTERFACE 0x1
-#define J9RELATIONSHIP_PARENT_IS_THROWABLE 0x2
+#define J9RELATIONSHIP_PARENT_CLASS_IS_THROWABLE 0x2
 
 #endif /* j9relationship_h */

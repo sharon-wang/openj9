@@ -453,7 +453,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 	IDATA rc;
 	U_8 *sourceName, *targetName;
 	UDATA sourceLength, targetLength;
-	BOOLEAN classRelationshipSnippetsEnabled = (NULL == verifyData->classRelationshipSnippetsHashTable) ? FALSE : TRUE;
+	BOOLEAN classRelationshipSnippetsEnabled = J9_ARE_ANY_BITS_SET(verifyData->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER_SNIPPETS);
 
 	*reasonCode = 0;
 
