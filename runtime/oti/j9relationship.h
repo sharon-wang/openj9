@@ -60,6 +60,10 @@ typedef struct J9ClassRelationshipClassNameIndex {
 	U_32 *address; /* The address in the data buffer where the J9UTF8 is stored */
 } J9ClassRelationshipClassNameIndex;
 
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM 3 /* The approximated minumum number of class relationship nodes for a classloader */
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM_SYSTEM_CLASSLOADER 933 /* The minumum number of class relationship nodes for a System Classloader */
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM_EXTENSION_CLASSLOADER 0 /* The minumum number of class relationship nodes for an Extension Classloader */
+#define J9RELATIONSHIP_NODE_COUNT_MINIMUM_APPLICATION_CLASSLOADER 1 /* The minumum number of class relationship nodes for an Application Classloader */
 #define J9RELATIONSHIP_SNIPPET_COUNT_THRESHOLD 10 /* The estimated number of snippets typically associated with a class */
 #define J9RELATIONSHIP_SNIPPET_SINGLE 1 /* Snippet class name mapping configuration when snippetCount == 1 */
 #define J9RELATIONSHIP_SNIPPET_USE_ARRAY 2 /* Snippet class name mapping configuration when snippetCount <= J9RELATIONSHIP_SNIPPET_COUNT_THRESHOLD */
