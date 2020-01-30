@@ -285,16 +285,18 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 
 /**
  * @brief Allocates new hash table to store class relationship entries.
+ *        On successful allocation of the table, also intialize memory
+ *        pool for class relationship nodes.
  *
  * @param *classLoader The class loader where the hash table is stored
  * @param *vm The VM requesting a new class relationship hash table
- * @return J9HashTable Returns 0 if successful, and 1 otherwise.
+ * @return UDATA Returns 0 if successful, and 1 otherwise.
  */
 UDATA
 j9bcv_hashClassRelationshipTableNew(J9ClassLoader *classLoader, J9JavaVM *vm);
 
 /**
- * @brief Frees memory for each J9ClassRelationship table entry, J9ClassRelationshipNode, and the classRelationships hash table itself.
+ * @brief Frees memory for each J9ClassRelationship table entry and J9ClassRelationshipNode.
  *
  * @param *vmThread The calling VM thread
  * @param *classLoader The class loader where the hash table is stored
