@@ -47,8 +47,8 @@ static UDATA relationshipClassNameHashFn(void *key, void *userData);
 static UDATA relationshipClassNameHashEqualFn(void *leftKey, void *rightKey, void *userData);
 
 /* Class Relationship functions */
-static VMINLINE J9ClassRelationshipNode *allocateParentNode(J9VMThread *vmThread, U_8 *className, UDATA classNameLength);
-static VMINLINE J9ClassRelationship *findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+static J9ClassRelationshipNode *allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+static J9ClassRelationship *findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
 static void freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ClassRelationship *relationship);
 static UDATA relationshipHashFn(void *key, void *userData);
 static UDATA relationshipHashEqualFn(void *leftKey, void *rightKey, void *userData);
@@ -865,7 +865,6 @@ IDATA
 j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, U_8 *parentName, UDATA parentNameLength, IDATA *reasonCode)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
-	J9JavaVM *vm = vmThread->javaVM;
 	J9ClassRelationship *childEntry = NULL;
 	J9ClassRelationshipNode *parentNode = NULL;
 	J9ClassRelationship child = {0};
@@ -910,7 +909,7 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 	} else {
 		/* Add a parentNode to the child's linked list of parents */
 		if (J9_LINKED_LIST_IS_EMPTY(childEntry->root)) {
-			parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
+			parentNode = allocateParentNode(vmThread, classLoader, parentName, parentNameLength);
 			if (parentNode == NULL) {
 				/* Allocation failure */
 				Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
@@ -940,7 +939,7 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 				walk = J9_LINKED_LIST_NEXT_DO(childEntry->root, walk);
 			}
 			if (!alreadyPresent) {
-				parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
+				parentNode = allocateParentNode(vmThread, classLoader, parentName, parentNameLength);
 				if (parentNode == NULL) {
 					/* Allocation failure */
 					Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
@@ -1088,11 +1087,12 @@ validateDone:
  *
  * Return the allocated J9ClassRelationshipNode.
  */
-static VMINLINE J9ClassRelationshipNode *
-allocateParentNode(J9VMThread *vmThread, U_8 *className, UDATA classNameLength)
+static J9ClassRelationshipNode *
+allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
-	J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) j9mem_allocate_memory(sizeof(J9ClassRelationshipNode), J9MEM_CATEGORY_CLASSES);
+	J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) pool_newElement(classLoader->classRelationshipsPool);
+	// J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) j9mem_allocate_memory(sizeof(J9ClassRelationshipNode), J9MEM_CATEGORY_CLASSES);
 
 	if (NULL != parentNode) {
 		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
@@ -1102,7 +1102,8 @@ allocateParentNode(J9VMThread *vmThread, U_8 *className, UDATA classNameLength)
 			parentNode->className[classNameLength] = '\0';
 			parentNode->classNameLength = classNameLength;
 		} else {
-			j9mem_free_memory(parentNode);
+			// j9mem_free_memory(parentNode);
+			pool_removeElement(classLoader->classRelationshipsPool, parentNode);
 			parentNode = NULL;
 		}
 	}
@@ -1115,11 +1116,10 @@ allocateParentNode(J9VMThread *vmThread, U_8 *className, UDATA classNameLength)
  *
  * Returns the found J9ClassRelationship, or NULL if it is not found.
  */
-static VMINLINE J9ClassRelationship *
+static J9ClassRelationship *
 findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
 {
 	J9ClassRelationship *classEntry = NULL;
-	J9JavaVM *vm = vmThread->javaVM;
 
 	Trc_RTV_findClassRelationship_Entry(vmThread, classNameLength, className);
 
@@ -1150,7 +1150,8 @@ freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoade
 		Trc_RTV_freeClassRelationshipParentNodes_Parent(vmThread, parentNode->classNameLength, parentNode->className);
 		J9_LINKED_LIST_REMOVE(relationship->root, parentNode);
 		j9mem_free_memory(parentNode->className);
-		j9mem_free_memory(parentNode);
+		// j9mem_free_memory(parentNode);
+		pool_removeElement(classLoader->classRelationshipsPool, parentNode);
 	}
 
 	Trc_RTV_freeClassRelationshipParentNodes_Exit(vmThread);
@@ -1159,6 +1160,8 @@ freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoade
 
 /**
  * Allocates new hash table to store class relationship entries.
+ * On successful allocation of the table, also intialize memory
+ * pool for class relationship nodes.
  *
  * Returns 0 if successful, and 1 otherwise.
  */
@@ -1166,13 +1169,16 @@ UDATA
 j9bcv_hashClassRelationshipTableNew(J9ClassLoader *classLoader, J9JavaVM *vm)
 {
 	UDATA result = 0;
+	J9PortLibrary *portLib = vm->portLibrary;
 
 	/* Allocate classRelationshipsHashTable if -XX:+ClassRelationshipVerifier is used */
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER)) {
-		classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
+		classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(portLib), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
 
 		if (NULL == classLoader->classRelationshipsHashTable) {
 			result = 1;
+		} else {
+			classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), J9RELATIONSHIP_NODE_COUNT_MINIMUM, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(portLib));
 		}
 	}
 
@@ -1180,8 +1186,7 @@ j9bcv_hashClassRelationshipTableNew(J9ClassLoader *classLoader, J9JavaVM *vm)
 }
 
 /**
- * Frees memory for each J9ClassRelationship table entry, J9ClassRelationshipNode, 
- * and the classRelationships hash table itself.
+ * Frees memory for each J9ClassRelationship table entry, J9ClassRelationshipNode.
  */
 void
 j9bcv_hashClassRelationshipTableFree(J9VMThread *vmThread, J9ClassLoader *classLoader, J9JavaVM *vm)

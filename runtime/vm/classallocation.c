@@ -407,11 +407,14 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		classLoader->romClassOrphansHashTable = NULL;
 	}
 
-	/* Free the class relationships table */
+	/* Free the class relationships table and pool */
 	if (NULL != classLoader->classRelationshipsHashTable) {
 		j9bcv_hashClassRelationshipTableFree(vmThread, classLoader, javaVM);
 		hashTableFree(classLoader->classRelationshipsHashTable);
 		classLoader->classRelationshipsHashTable = NULL;
+
+		pool_kill(classLoader->classRelationshipsPool);
+		classLoader->classRelationshipsPool = NULL;
 	}
 
 	TRIGGER_J9HOOK_VM_CLASS_LOADER_DESTROY(javaVM->hookInterface, javaVM, classLoader);

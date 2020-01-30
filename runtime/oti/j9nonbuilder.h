@@ -3088,6 +3088,7 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* moduleExtraInfoHashTable;
 	struct J9HashTable* classLocationHashTable;
 	struct J9HashTable* classRelationshipsHashTable;
+	struct J9Pool* classRelationshipsPool;
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
