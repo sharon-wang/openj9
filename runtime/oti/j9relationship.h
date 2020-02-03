@@ -30,8 +30,7 @@ typedef struct J9ClassRelationship {
 } J9ClassRelationship;
 
 typedef struct J9ClassRelationshipNode {
-	U_8 *className;
-	UDATA classNameLength;
+	UDATA classNameIndex; /* The index corresponding to the class name in the classNameList */
 	struct J9ClassRelationshipNode *linkNext;
 	struct J9ClassRelationshipNode *linkPrevious;
 } J9ClassRelationshipNode;

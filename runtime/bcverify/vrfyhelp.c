@@ -539,8 +539,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 				if (classRelationshipSnippetsEnabled) {
 					rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
 				} else {
-					getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
-					rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+					rc = j9bcv_recordClassRelationship(verifyData, sourceIndex, targetIndex, reasonCode);
 				}
 			}
 
@@ -569,8 +568,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		if (classRelationshipSnippetsEnabled) {
 			rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
 		} else {
-			getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
-			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+			rc = j9bcv_recordClassRelationship(verifyData, sourceIndex, targetIndex, reasonCode);
 		}
 	}
 
@@ -589,8 +587,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		if (classRelationshipSnippetsEnabled) {
 			rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
 		} else {
-			getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
-			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+			rc = j9bcv_recordClassRelationship(verifyData, sourceIndex, targetIndex, reasonCode);
 		}
 	}
 

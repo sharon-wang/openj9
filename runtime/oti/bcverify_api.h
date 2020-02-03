@@ -217,7 +217,7 @@ unlinkClassLoadingConstraints (J9JavaVM* jvm);
  * @return IDATA Returns TRUE if recording the snippet is successful, FALSE otherwise
  */
 IDATA
-j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDATA childClassIndex, UDATA parentClassIndex, IDATA *reasonCode);
+j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDATA sourceClassIndex, UDATA targetClassIndex, IDATA *reasonCode);
 
 /**
  * @brief Process class relationship snippets for a ROM class.
@@ -241,7 +241,7 @@ j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *ve
 /**
  * @brief Fetch class relationship snippets for a romClass from the Shared Classes Cache.
  *
- * @param *verifyData Bytecode verification data for the romClass
+ * @param *verifyData Bytecode verification data pointer
  * @param *snippetsDataDescriptor Pointer to the descriptor where the snippet data will be stored to
  * @param *snippetTableAllocationResult Default BCV_SUCCESS, BCV_ERR_INSUFFICIENT_MEMORY on OOM
  * @return BOOLEAN Returns TRUE if snippets are found in the cache, FALSE otherwise
@@ -258,17 +258,14 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
 /**
  * @brief Record a class relationship in the class relationships table.
  *
- * @param *vmThread The calling vmThread
- * @param *classLoader Class loader to record the relationship to
- * @param *childName Class name of the child (source class) to record
- * @param childNameLength Length of the child class name
- * @param *parentName Class name of the parent (target class, i.e. superclass or interface) to record
- * @param parentNameLength Length of the parent class name
+ * @param *verifyData Bytecode verification data pointer
+ * @param sourceClassIndex The index of the source class name in verifyData->classNameList
+ * @param targetClassIndex The index of the target class name in verifyData->classNameList
  * @param *reasonCode Set to BCV_ERR_INSUFFICIENT_MEMORY if a child entry or parent node cannot be allocated, otherwise 0
  * @return IDATA Returns TRUE if successful and FALSE if an out of memory error occurs
  */
 IDATA
-j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, U_8 *parentName, UDATA parentNameLength, IDATA *reasonCode);
+j9bcv_recordClassRelationship(J9BytecodeVerificationData *verifyData, UDATA sourceClassIndex, UDATA targetClassIndex, IDATA *reasonCode);
 
 /**
  * @brief Validate each recorded relationship for a class (child).
