@@ -261,14 +261,12 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
  * @param *vmThread The calling vmThread
  * @param *classLoader Class loader to record the relationship to
  * @param *childName Class name of the child (source class) to record
- * @param childNameLength Length of the child class name
  * @param *parentName Class name of the parent (target class, i.e. superclass or interface) to record
- * @param parentNameLength Length of the parent class name
  * @param *reasonCode Set to BCV_ERR_INSUFFICIENT_MEMORY if a child entry or parent node cannot be allocated, otherwise 0
  * @return IDATA Returns TRUE if successful and FALSE if an out of memory error occurs
  */
 IDATA
-j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, U_8 *parentName, UDATA parentNameLength, IDATA *reasonCode);
+j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *childName, J9UTF8 *parentName, IDATA *reasonCode);
 
 /**
  * @brief Validate each recorded relationship for a class (child).
@@ -276,12 +274,11 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
  * @param *vmThread The calling vmThread
  * @param *classLoader Class loader to look up relationships from
  * @param *childName Class name of the child class to validate
- * @param childNameLength Length of the child class name
  * @param childClass The loaded child J9Class
  * @return J9Class Returns NULL if successful, or the class that fails validation if unsuccessful
  */
 J9Class *
-j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, J9Class *childClass);
+j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *childName, J9Class *childClass);
 
 /**
  * @brief Frees memory for each J9ClassRelationship table entry and J9ClassRelationshipNode.
@@ -435,6 +432,15 @@ initializeClassNameList(J9BytecodeVerificationData *verifyData);
 */
 void
 getNameAndLengthFromClassNameList(J9BytecodeVerificationData *verifyData, UDATA listIndex, U_8 **name, UDATA *length);
+
+/**
+* @brief
+* @param *verifyData
+* @param listIndex Index in the classNameList corresponding to a class
+* @return J9UTF8 * The pointer to the class name
+*/
+J9UTF8 *
+getUTF8FromClassNameList(J9BytecodeVerificationData *verifyData, UDATA listIndex);
 
 /**
 * @brief

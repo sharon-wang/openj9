@@ -401,13 +401,15 @@ doVerify:
 				if (!VM_VMHelpers::exceptionPending(currentThread)) {
 					/* Validate class relationships if -XX:+ClassRelationshipVerifier is used and if the classfile major version is at least 51 (Java 7) */
 					if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && (clazz->romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS)) {
-						U_8 *clazzName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
-						UDATA clazzNameLength = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass));
-						J9Class *validateResult = j9bcv_validateClassRelationships(currentThread, clazz->classLoader, clazzName, clazzNameLength, clazz);
+						J9UTF8 *clazzUTF8 = J9ROMCLASS_CLASSNAME(clazz->romClass);
+						J9Class *validateResult = j9bcv_validateClassRelationships(currentThread, clazz->classLoader, clazzUTF8, clazz);
 
 						if (NULL != validateResult) {
-							U_8 *resultName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(validateResult->romClass));
-							UDATA resultNameLength = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(validateResult->romClass));
+							J9UTF8 *resultUTF8 = J9ROMCLASS_CLASSNAME(validateResult->romClass);
+							U_8 *resultName = J9UTF8_DATA(resultUTF8);
+							U_8 *clazzName = J9UTF8_DATA(clazzUTF8);
+							UDATA resultNameLength = J9UTF8_LENGTH(resultUTF8);
+							UDATA clazzNameLength = J9UTF8_LENGTH(clazzUTF8);
 							Trc_VM_classInitStateMachine_classRelationshipValidationFailed(currentThread, clazzNameLength, clazzName, resultNameLength, resultName);
 							setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_CLASS_RELATIONSHIP_INVALID, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, clazzNameLength, clazzName, resultNameLength, resultName);
 						}

@@ -539,8 +539,9 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 				if (classRelationshipSnippetsEnabled) {
 					rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
 				} else {
-					getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
-					rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+					J9UTF8 *sourceName = getUTF8FromClassNameList(verifyData, sourceIndex);
+					J9UTF8 *targetName = getUTF8FromClassNameList(verifyData, targetIndex);
+					rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, targetName, reasonCode);
 				}
 			}
 
@@ -569,8 +570,9 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		if (classRelationshipSnippetsEnabled) {
 			rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
 		} else {
-			getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
-			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+			J9UTF8 *sourceName = getUTF8FromClassNameList(verifyData, sourceIndex);
+			J9UTF8 *targetName = getUTF8FromClassNameList(verifyData, targetIndex);
+			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, targetName, reasonCode);
 		}
 	}
 
@@ -589,9 +591,9 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		if (classRelationshipSnippetsEnabled) {
 			rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
 		} else {
-			getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
-			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
-		}
+			J9UTF8 *sourceName = getUTF8FromClassNameList(verifyData, sourceIndex);
+			J9UTF8 *targetName = getUTF8FromClassNameList(verifyData, targetIndex);
+			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, targetName, reasonCode);		}
 	}
 
 	return rc;
@@ -1062,6 +1064,25 @@ void getNameAndLengthFromClassNameList(J9BytecodeVerificationData *verifyData, U
 		J9ROMClass * romClass = verifyData->romClass;
 		*name = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 	}
+}
+
+/**
+ * Get the J9UTF8 for the class name from the verifyData classNameList.
+ *
+ * Return the J9UTF8 pointer for the class name.
+ */
+J9UTF8 *getUTF8FromClassNameList(J9BytecodeVerificationData *verifyData, UDATA listIndex)
+{
+	J9UTF8 *className = NULL;
+	U_32 *offset = (U_32 *) verifyData->classNameList[listIndex];
+
+	if (0 == offset[0]) {
+		className = (J9UTF8 *) (offset + 1);
+	} else {
+		className = (J9UTF8 *) ((UDATA) offset[0] + (UDATA) verifyData->romClass);
+	}
+
+	return className;
 }
 
 /* return BCV_SUCCESS if field is found

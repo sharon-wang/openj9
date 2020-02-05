@@ -25,9 +25,8 @@
 #include "omrlinkedlist.h"
 
 /**
- * Check if a relationship has been recorded in the
- * classloader relationship table for the specified
- * child class and parent class.
+ * Check if a relationship has been recorded in the classloader relationship table
+ * for the specified child class and parent class.
  *
  * Class: org_openj9_test_classRelationshipVerifier_TestClassRelationshipVerifier
  * Method: isRelationshipRecorded
@@ -37,7 +36,7 @@
  * @param[in] clazz the class on which the static method was invoked
  * @param[in] childNameString the name of the child class
  * @param[in] parentNameString the name of the parent class
- * @param[in] classLoaderObject the class loader used to load the parent and child classes
+ * @param[in] classLoaderObject the classloader used to load the parent and child classes
  */
 JNIEXPORT jboolean JNICALL
 Java_org_openj9_test_classRelationshipVerifier_TestClassRelationshipVerifier_isRelationshipRecorded(JNIEnv *env, jclass clazz, jstring childNameString, jstring parentNameString, jobject classLoaderObject)
@@ -47,8 +46,8 @@ Java_org_openj9_test_classRelationshipVerifier_TestClassRelationshipVerifier_isR
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ClassLoader *classLoader = NULL;
-	U_8 *childName = NULL;
-	U_8 *parentName = NULL;
+	J9UTF8 *childName = NULL;
+	J9UTF8 *parentName = NULL;
 	char childNameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH] = {0};
 	char parentNameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH] = {0};
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -62,49 +61,54 @@ Java_org_openj9_test_classRelationshipVerifier_TestClassRelationshipVerifier_isR
 
 	if (NULL != classLoader) {
 		if (NULL != classLoader->classRelationshipsHashTable) {
-			UDATA childNameLength = 0;
-			childName = (U_8 *) vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(childNameString), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, childNameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &childNameLength);
+			childName = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(childNameString), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, childNameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 
 			if (NULL != childName) {
 				J9ClassRelationship exemplar = {0};
 				J9ClassRelationship *childEntry = NULL;
 
 				exemplar.className = childName;
-				exemplar.classNameLength = childNameLength;
 				childEntry = hashTableFind(classLoader->classRelationshipsHashTable, &exemplar);
 
+				/* If the child class has relationships recorded, look for the parent class in its relationships */
 				if (NULL != childEntry) {
-					UDATA parentNameLength = 0;
-					parentName = (U_8 *) vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(parentNameString), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, parentNameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &parentNameLength);
+					parentName = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, J9_JNI_UNWRAP_REFERENCE(parentNameString), J9_STR_NULL_TERMINATE_RESULT | J9_STR_XLAT, "", 0, parentNameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH);
 
 					if (NULL != parentName) {
 						J9ClassRelationshipNode *currentNode = J9_LINKED_LIST_START_DO(childEntry->root);
 
 						while (NULL != currentNode) {
-							if (J9UTF8_DATA_EQUALS(currentNode->className, currentNode->classNameLength, parentName, parentNameLength)) {
+							if (J9UTF8_EQUALS(currentNode->className, parentName)) {
+								/* The parent class name is found in the child class's list of parent classes */
 								isRelationshipRecorded = JNI_TRUE;
 								break;
 							}
 							currentNode = J9_LINKED_LIST_NEXT_DO(childEntry->root, currentNode);
 						}
 					} else {
+						j9tty_printf(privatePortLibrary, "ERROR: parentName J9UTF8 allocation failed\n");
 						vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 					}
+				} else {
+					/* There are no relationships recorded for the child class */
 				}
 			} else {
+				j9tty_printf(privatePortLibrary, "ERROR: childName J9UTF8 allocation failed\n");
 				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			}
+		} else {
+			j9tty_printf(privatePortLibrary, "ERROR: classLoader->classRelationshipsHashTable is NULL\n");
 		}
 	}
 
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	if ((U_8*) childNameStackBuffer != childName) {
+	if ((J9UTF8 *) childNameStackBuffer != childName) {
 		j9mem_free_memory(childName);
 	}
 
-	if ((U_8*) parentNameStackBuffer != parentName) {
+	if ((J9UTF8 *) parentNameStackBuffer != parentName) {
 		j9mem_free_memory(parentName);
 	}
 

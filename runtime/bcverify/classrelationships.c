@@ -29,7 +29,7 @@
 /* Class Relationship Snippet functions */
 static void processClassRelationshipSnippetsNoCachedData(J9BytecodeVerificationData *verifyData, IDATA *reasonCode);
 static void processClassRelationshipSnippetsUsingCachedData(J9BytecodeVerificationData *verifyData, uint8_t *snippetsDataDescriptorAddress, IDATA *reasonCode);
-static void checkSnippetRelationship(J9BytecodeVerificationData *verifyData, U_8 *sourceClassName, UDATA sourceClassNameLength, U_8 *targetClassName, UDATA targetClassNameLength, IDATA *reasonCode);
+static void checkSnippetRelationship(J9BytecodeVerificationData *verifyData, J9UTF8 *sourceClassUTF8, J9UTF8 *targetClassUTF8, IDATA *reasonCode);
 static char *generateClassRelationshipSnippetsKey(J9JavaVM *vm, J9VMThread *vmThread, U_8 *className, UDATA classNameLength);
 static IDATA hashClassRelationshipSnippetTableNew(J9BytecodeVerificationData *verifyData);
 static void hashClassRelationshipSnippetTableFree(J9BytecodeVerificationData *verifyData);
@@ -48,8 +48,8 @@ static UDATA relationshipClassNameHashEqualFn(void *leftKey, void *rightKey, voi
 
 /* Class Relationship functions */
 static UDATA allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm);
-static J9ClassRelationshipNode *allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
-static J9ClassRelationship *findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
+static J9ClassRelationshipNode *allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *className);
+static J9ClassRelationship *findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *className);
 static void freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ClassRelationship *relationship);
 static UDATA relationshipHashFn(void *key, void *userData);
 static UDATA relationshipHashEqualFn(void *leftKey, void *rightKey, void *userData);
@@ -138,26 +138,18 @@ static void
 processClassRelationshipSnippetsNoCachedData(J9BytecodeVerificationData *verifyData, IDATA *reasonCode)
 {
 	J9VMThread *vmThread = verifyData->vmStruct;
-	J9JavaVM *vm = vmThread->javaVM;
-	J9ClassLoader *classLoader = verifyData->classLoader;
-	J9UTF8 **classNameList = verifyData->classNameList;
 	J9HashTableState hashTableState = {0};
 	J9ClassRelationshipSnippet *snippetEntry = (J9ClassRelationshipSnippet *) hashTableStartDo(verifyData->classRelationshipSnippetsHashTable, &hashTableState);
 
 	while (NULL != snippetEntry) {
-		U_8 *sourceClassName = NULL;
-		U_8 *targetClassName = NULL;
-		UDATA sourceClassNameLength = 0;
-		UDATA targetClassNameLength = 0;
-		
-		getNameAndLengthFromClassNameList(verifyData, snippetEntry->sourceClassNameIndex, &sourceClassName, &sourceClassNameLength);
-		getNameAndLengthFromClassNameList(verifyData, snippetEntry->targetClassNameIndex, &targetClassName, &targetClassNameLength);
+		J9UTF8 *sourceClassUTF8 = getUTF8FromClassNameList(verifyData, snippetEntry->sourceClassNameIndex);
+		J9UTF8 *targetClassUTF8 = getUTF8FromClassNameList(verifyData, snippetEntry->targetClassNameIndex);
 
-		checkSnippetRelationship(verifyData, sourceClassName, sourceClassNameLength, targetClassName, targetClassNameLength, reasonCode);
+		checkSnippetRelationship(verifyData, sourceClassUTF8, targetClassUTF8, reasonCode);
 
 		if (BCV_SUCCESS != *reasonCode) {
 			/* Either an OOM or verification error occurred while processing snippets */
-			Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing(vmThread, sourceClassNameLength, sourceClassName, targetClassNameLength, targetClassName);
+			Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing(vmThread, J9UTF8_LENGTH(sourceClassUTF8), J9UTF8_DATA(sourceClassUTF8), J9UTF8_LENGTH(targetClassUTF8), J9UTF8_DATA(targetClassUTF8));
 			break;
 		}
 
@@ -175,7 +167,6 @@ processClassRelationshipSnippetsUsingCachedData(J9BytecodeVerificationData *veri
 {
 	J9VMThread *vmThread = verifyData->vmStruct;
 	UDATA headerSize = sizeof(J9SharedClassRelationshipHeader);
-	UDATA snippetSize = sizeof(J9SharedClassRelationshipSnippet);
 	UDATA *cacheDataHeaderStart = (UDATA *) snippetsDataDescriptorAddress;
 	UDATA snippetCount = *cacheDataHeaderStart;
 	J9SharedClassRelationshipSnippet *cacheDataSnippets = (J9SharedClassRelationshipSnippet *) (snippetsDataDescriptorAddress + headerSize);
@@ -184,27 +175,17 @@ processClassRelationshipSnippetsUsingCachedData(J9BytecodeVerificationData *veri
 	for (; i < snippetCount; i++) {
 		J9UTF8 *sourceClassUTF8 = NULL;
 		J9UTF8 *targetClassUTF8 = NULL;
-		U_8 *sourceClassName = NULL;
-		U_8 *targetClassName = NULL;
-		UDATA sourceClassNameLength = 0;
-		UDATA targetClassNameLength = 0;
 
 		sourceClassUTF8 = SRP_GET(cacheDataSnippets[i].sourceClassName, J9UTF8 *);
-		targetClassUTF8 = SRP_GET(cacheDataSnippets[i].targetClassName, J9UTF8 *);
-
 		Assert_RTV_true(NULL != sourceClassUTF8);
+		targetClassUTF8 = SRP_GET(cacheDataSnippets[i].targetClassName, J9UTF8 *);
 		Assert_RTV_true(NULL != targetClassUTF8);
 
-		sourceClassName = J9UTF8_DATA(sourceClassUTF8);
-		targetClassName = J9UTF8_DATA(targetClassUTF8);
-		sourceClassNameLength = J9UTF8_LENGTH(sourceClassUTF8);
-		targetClassNameLength = J9UTF8_LENGTH(targetClassUTF8);
-
-		checkSnippetRelationship(verifyData, sourceClassName, sourceClassNameLength, targetClassName, targetClassNameLength, reasonCode);
+		checkSnippetRelationship(verifyData, sourceClassUTF8, targetClassUTF8, reasonCode);
 	
 		if (BCV_SUCCESS != *reasonCode) {
 			/* Either an OOM or verification error occurred while processing snippets */
-			Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing(vmThread, sourceClassNameLength, sourceClassName, targetClassNameLength, targetClassName);
+			Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing(vmThread, J9UTF8_LENGTH(sourceClassUTF8), J9UTF8_DATA(sourceClassUTF8), J9UTF8_LENGTH(targetClassUTF8), J9UTF8_DATA(targetClassUTF8));
 			break;
 		}
 	}
@@ -219,13 +200,17 @@ processClassRelationshipSnippetsUsingCachedData(J9BytecodeVerificationData *veri
  * class loader's hash table.
  */
 static void
-checkSnippetRelationship(J9BytecodeVerificationData *verifyData, U_8 *sourceClassName, UDATA sourceClassNameLength, U_8 *targetClassName, UDATA targetClassNameLength, IDATA *reasonCode)
+checkSnippetRelationship(J9BytecodeVerificationData *verifyData, J9UTF8 *sourceClassUTF8, J9UTF8 *targetClassUTF8, IDATA *reasonCode)
 {
 	J9VMThread *vmThread = verifyData->vmStruct;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9ClassLoader *classLoader = verifyData->classLoader;
 	J9Class *sourceClass = NULL;
 	J9Class *targetClass = NULL;
+	U_8 *sourceClassName = J9UTF8_DATA(sourceClassUTF8);
+	U_8 *targetClassName = J9UTF8_DATA(targetClassUTF8);
+	UDATA sourceClassNameLength = J9UTF8_LENGTH(sourceClassUTF8);
+	UDATA targetClassNameLength = J9UTF8_LENGTH(targetClassUTF8);
 	*reasonCode = BCV_SUCCESS;
 
 	/* Check if the targetClass is already loaded */
@@ -233,7 +218,7 @@ checkSnippetRelationship(J9BytecodeVerificationData *verifyData, U_8 *sourceClas
 
 	/* If targetClass is not already loaded, record the relationship */
 	if (NULL == targetClass) {
-		j9bcv_recordClassRelationship(vmThread, classLoader, sourceClassName, sourceClassNameLength, targetClassName, targetClassNameLength, reasonCode);
+		j9bcv_recordClassRelationship(vmThread, classLoader, sourceClassUTF8, targetClassUTF8, reasonCode);
 		goto donecheckSnippetRelationship;
 	} else if (J9ROMCLASS_IS_INTERFACE(targetClass->romClass)) {
 		/* Relationship verification passes; don't save relationship */
@@ -246,7 +231,7 @@ checkSnippetRelationship(J9BytecodeVerificationData *verifyData, U_8 *sourceClas
 
 	/* If sourceClass is not already loaded, record the relationship */
 	if (NULL == sourceClass) {
-		j9bcv_recordClassRelationship(vmThread, classLoader, sourceClassName, sourceClassNameLength, targetClassName, targetClassNameLength, reasonCode);
+		j9bcv_recordClassRelationship(vmThread, classLoader, sourceClassUTF8, targetClassUTF8, reasonCode);
 		goto donecheckSnippetRelationship;
 	}
 	
@@ -621,15 +606,13 @@ doneStoreToDataBuffer:
 }
 
 /**
- * Writes a class name to the next availble J9UTF8 address in the data
- * buffer and updates the nextUTF8Address.
+ * Writes a class name to the next availble J9UTF8 address in the data buffer.
  * 
  * Returns the size of data stored at the J9UTF8 address.
  */
 static UDATA
 setCurrentAndNextUTF8s(J9BytecodeVerificationData *verifyData, J9UTF8 **utf8Address, J9UTF8 **nextUTF8Address, UDATA classNameIndex)
 {
-	J9UTF8 *classNameUTF8 = NULL;
 	U_8 *className = NULL;
 	UDATA classNameLength = 0;
 	UDATA utf8AddressSize = 0;
@@ -863,18 +846,25 @@ relationshipClassNameHashEqualFn(void *leftKey, void *rightKey, void *userData)
  * Returns TRUE if successful and FALSE if an out of memory error occurs.
  */
 IDATA
-j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, U_8 *parentName, UDATA parentNameLength, IDATA *reasonCode)
+j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *childName, J9UTF8 *parentName, IDATA *reasonCode)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
 	J9ClassRelationship *childEntry = NULL;
 	J9ClassRelationshipNode *parentNode = NULL;
-	J9ClassRelationship child = {0};
+	U_8 *childNameData = NULL;
+	U_8 *parentNameData = NULL;
+	UDATA childNameLength = 0;
+	UDATA parentNameLength = 0;
 	IDATA recordResult = FALSE;
 	*reasonCode = BCV_ERR_INSUFFICIENT_MEMORY;
 
-	Trc_RTV_recordClassRelationship_Entry(vmThread, childNameLength, childName, parentNameLength, parentName);
-
 	Assert_RTV_true((NULL != childName) && (NULL != parentName));
+	childNameData = J9UTF8_DATA(childName);
+	parentNameData = J9UTF8_DATA(parentName);
+	childNameLength = J9UTF8_LENGTH(childName);
+	parentNameLength = J9UTF8_LENGTH(parentName);
+
+	Trc_RTV_recordClassRelationship_Entry(vmThread, childNameLength, childNameData, parentNameLength, parentNameData);
 
 	/* If the hash table has not been allocated yet, create new hash table and pool */
 	if (NULL == classLoader->classRelationshipsHashTable) {
@@ -886,29 +876,30 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 	}
 
 	/* Locate existing childEntry or add new entry to the hashtable */
-	childEntry = findClassRelationship(vmThread, classLoader, childName, childNameLength);
+	childEntry = findClassRelationship(vmThread, classLoader, childName);
 
 	if (NULL == childEntry) {
-		child.className = (U_8 *) j9mem_allocate_memory(childNameLength + 1, J9MEM_CATEGORY_CLASSRELATIONSHIPS_STRINGS);
+		J9ClassRelationship child = {0};
+		child.className = childName;
 
-		/* className for child successfully allocated, continue initialization of child entry */
-		if (NULL != child.className) {
-			memcpy(child.className, childName, childNameLength);
-			child.className[childNameLength] = '\0';
-			child.classNameLength = childNameLength;
+		// /* className for child successfully allocated, continue initialization of child entry */
+		// if (NULL != child.className) {
+		// 	memcpy(child.className, childName, childNameLength);
+		// 	child.className[childNameLength] = '\0';
+		// 	child.classNameLength = childNameLength;
 			child.flags = 0;
 
 			childEntry = hashTableAdd(classLoader->classRelationshipsHashTable, &child);
 
 			if (NULL == childEntry) {
 				Trc_RTV_recordClassRelationship_EntryAllocationFailedChild(vmThread);
-				j9mem_free_memory(child.className);
+				// j9mem_free_memory(child.className);
 				goto recordDone;
 			}
-		} else {
-			Trc_RTV_recordClassRelationship_EntryAllocationFailedChild(vmThread);
-			goto recordDone;
-		}
+		// } else {
+		// 	Trc_RTV_recordClassRelationship_EntryAllocationFailedChild(vmThread);
+		// 	goto recordDone;
+		// }
 	}
 
 	/* If the parent is java/lang/Throwable, set a flag instead of allocating a node */
@@ -919,13 +910,12 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 	} else {
 		/* Add a parentNode to the child's linked list of parents */
 		if (J9_LINKED_LIST_IS_EMPTY(childEntry->root)) {
-			parentNode = allocateParentNode(vmThread, classLoader, parentName, parentNameLength);
+			parentNode = allocateParentNode(vmThread, classLoader, parentName);
 			if (parentNode == NULL) {
 				/* Allocation failure */
-				Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
 				goto recordDone;
 			}
-			Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode); 
+			Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childNameLength, childNameData, childEntry, parentNameLength, parentNameData, parentNode);
 			J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
 		} else {
 			BOOLEAN alreadyPresent = FALSE;
@@ -936,26 +926,26 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 			 * and duplicates can be avoided
 			 */
 			while (NULL != walk) {
-				if (walk->classNameLength > parentNameLength) {
+				J9UTF8 *walkName = walk->className;
+				if (J9UTF8_LENGTH(walkName) > parentNameLength) {
 					addBefore = TRUE;
 					break;
-				} else if (J9UTF8_DATA_EQUALS(walk->className, walk->classNameLength, parentName, parentNameLength)) {
+				} else if (J9UTF8_EQUALS(walkName, parentName)) {
 					/* Already present, skip */
 					alreadyPresent = TRUE;
 					break;
 				} else {
-					/* walk->className is shorter or equal length but different data; keep looking */
+					/* walkName is shorter or equal length but different data; keep looking */
 				}
 				walk = J9_LINKED_LIST_NEXT_DO(childEntry->root, walk);
 			}
 			if (!alreadyPresent) {
-				parentNode = allocateParentNode(vmThread, classLoader, parentName, parentNameLength);
+				parentNode = allocateParentNode(vmThread, classLoader, parentName);
 				if (parentNode == NULL) {
 					/* Allocation failure */
-					Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
 					goto recordDone;
 				}
-				Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode); 
+				Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childNameLength, childNameData, childEntry, parentNameLength, parentNameData, parentNode);
 				if (addBefore) {
 					J9_LINKED_LIST_ADD_BEFORE(childEntry->root, walk, parentNode);
 				} else {
@@ -980,17 +970,21 @@ recordDone:
  * Returns failedClass, which is NULL if successful, or the class that fails validation if unsuccessful.
  */
 J9Class *
-j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, J9Class *childClass)
+j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *childName, J9Class *childClass)
 {
-	PORT_ACCESS_FROM_VMC(vmThread);
 	J9Class *parentClass = NULL;
 	J9Class *failedClass = NULL;
 	J9ClassRelationship *childEntry = NULL;
 	J9ClassRelationshipNode *parentNode = NULL;
+	U_8 *childNameData = NULL;
+	UDATA childNameLength = 0;
 
-	Trc_RTV_validateClassRelationships_Entry(vmThread, childNameLength, childName);
 	Assert_RTV_true(NULL != childName);
-	childEntry = findClassRelationship(vmThread, classLoader, childName, childNameLength);
+	childNameData = J9UTF8_DATA(childName);
+	childNameLength = J9UTF8_LENGTH(childName);
+
+	Trc_RTV_validateClassRelationships_Entry(vmThread, childNameLength, childNameData);
+	childEntry = findClassRelationship(vmThread, classLoader, childName);
 
 	/* No relationships were recorded for the class (in this class loader), or its relationships have already been verified */
 	if (NULL == childEntry) {
@@ -999,9 +993,9 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 
 	/* The class is invalid if it has been marked as an interface, but it actually isn't */
 	if (J9_ARE_ANY_BITS_SET(childEntry->flags, J9RELATIONSHIP_MUST_BE_INTERFACE)) {
-		Trc_RTV_validateClassRelationships_FlaggedAsInterface(vmThread, childNameLength, childName);
+		Trc_RTV_validateClassRelationships_FlaggedAsInterface(vmThread, childNameLength, childNameData);
 		if (!J9ROMCLASS_IS_INTERFACE(childClass->romClass)) {
-			Trc_RTV_validateClassRelationships_ShouldBeInterface(vmThread, childNameLength, childName);
+			Trc_RTV_validateClassRelationships_ShouldBeInterface(vmThread, childNameLength, childNameData);
 			failedClass = childClass;
 			goto validateDone;
 		}
@@ -1025,43 +1019,35 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 	parentNode = J9_LINKED_LIST_START_DO(childEntry->root);
 
 	while (NULL != parentNode) {
+		J9UTF8 *parentName = parentNode->className;
+		U_8 *parentNameData = J9UTF8_DATA(parentName);
+		UDATA parentNameLength = J9UTF8_LENGTH(parentName);
+
 		/* Find the parent class in the loaded classes table */
-		parentClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(classLoader, parentNode->className, parentNode->classNameLength);
+		parentClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(classLoader, parentNameData, parentNameLength);
 
 		/* If the parent class has not been loaded, then it has to be an interface since the child is already loaded */
 		if (NULL == parentClass) {
 			/* Add a new relationship to the table if one doesn't already exist and flag the parentClass as J9RELATIONSHIP_MUST_BE_INTERFACE */
-			J9ClassRelationship *parentEntry = findClassRelationship(vmThread, classLoader, parentNode->className, parentNode->classNameLength);
+			J9ClassRelationship *parentEntry = findClassRelationship(vmThread, classLoader, parentName);
 
-			Trc_RTV_validateClassRelationships_ParentNotLoaded(vmThread, parentNode->classNameLength, parentNode->className, parentNode);
+			Trc_RTV_validateClassRelationships_ParentNotLoaded(vmThread, parentNameLength, parentNameData, parentNode);
 
 			if (NULL == parentEntry) {
 				J9ClassRelationship parent = {0};
-				PORT_ACCESS_FROM_VMC(vmThread);
-				parent.className = (U_8 *) j9mem_allocate_memory(parentNode->classNameLength + 1, J9MEM_CATEGORY_CLASSRELATIONSHIPS_STRINGS);
+				parent.className = parentName;
+				parent.flags = J9RELATIONSHIP_MUST_BE_INTERFACE;
 
-				/* className for parent successfully allocated, continue initialization of parent entry */
-				if (NULL != parent.className) {
-					Trc_RTV_validateClassRelationships_AllocatingParent(vmThread);
-					memcpy(parent.className, parentNode->className, parentNode->classNameLength);
-					parent.className[parentNode->classNameLength] = '\0';
-					parent.classNameLength = parentNode->classNameLength;
-					parent.flags = J9RELATIONSHIP_MUST_BE_INTERFACE;
+				Trc_RTV_validateClassRelationships_AllocatingParent(vmThread);
+				parentEntry = hashTableAdd(classLoader->classRelationshipsHashTable, &parent);
 
-					parentEntry = hashTableAdd(classLoader->classRelationshipsHashTable, &parent);
-
-					if (NULL == parentEntry) {
-						Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
-						j9mem_free_memory(parent.className);
-						failedClass = childClass;
-						goto validateDone;
-					}
-					Trc_RTV_validateClassRelationships_AllocatedParentEntry(vmThread);
-				} else {
+				if (NULL == parentEntry) {
 					Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
 					failedClass = childClass;
 					goto validateDone;
 				}
+
+				Trc_RTV_validateClassRelationships_AllocatedParentEntry(vmThread);
 			} else {
 				parentEntry->flags |= J9RELATIONSHIP_MUST_BE_INTERFACE;
 			}
@@ -1069,12 +1055,12 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 			/* The already loaded parentClass should either be an interface, or is the same or superclass of the childClass */
 			if (J9ROMCLASS_IS_INTERFACE(parentClass->romClass)) {
 				/* If the target is an interface, be permissive as per the verifier type checking rules */
-				Trc_RTV_validateClassRelationships_ParentIsInterface(vmThread, parentNode->classNameLength, parentNode->className, parentNode);
+				Trc_RTV_validateClassRelationships_ParentIsInterface(vmThread, parentNameLength, parentNameData, parentNode);
 			} else if (isSameOrSuperClassOf(parentClass, childClass)) {
-				Trc_RTV_validateClassRelationships_ParentIsSuperClass(vmThread, parentNode->classNameLength, parentNode->className, parentNode);
+				Trc_RTV_validateClassRelationships_ParentIsSuperClass(vmThread, parentNameLength, parentNameData, parentNode);
 			} else {
 				/* The child and parent have an invalid relationship */
-				Trc_RTV_validateClassRelationships_InvalidRelationship(vmThread, parentNode->classNameLength, parentNode->className);
+				Trc_RTV_validateClassRelationships_InvalidRelationship(vmThread, parentNameLength, parentNameData);
 				failedClass = parentClass;
 				goto validateDone;
 			}
@@ -1084,7 +1070,6 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 
 	/* Successful validation; free memory for childEntry */
 	freeClassRelationshipParentNodes(vmThread, classLoader, childEntry);
-	j9mem_free_memory(childEntry->className);
 	hashTableRemove(classLoader->classRelationshipsHashTable, childEntry);
 
 validateDone:
@@ -1098,24 +1083,14 @@ validateDone:
  * Return the allocated J9ClassRelationshipNode.
  */
 static J9ClassRelationshipNode *
-allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *className)
 {
-	PORT_ACCESS_FROM_VMC(vmThread);
 	J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) pool_newElement(classLoader->classRelationshipsPool);
-	// J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) j9mem_allocate_memory(sizeof(J9ClassRelationshipNode), J9MEM_CATEGORY_CLASSES);
 
 	if (NULL != parentNode) {
-		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSRELATIONSHIPS_STRINGS);
-
-		if (NULL != parentNode->className) {
-			memcpy(parentNode->className, className, classNameLength);
-			parentNode->className[classNameLength] = '\0';
-			parentNode->classNameLength = classNameLength;
-		} else {
-			// j9mem_free_memory(parentNode);
-			pool_removeElement(classLoader->classRelationshipsPool, parentNode);
-			parentNode = NULL;
-		}
+		parentNode->className = className;
+	} else {
+		Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
 	}
 
 	return parentNode;
@@ -1127,16 +1102,15 @@ allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *classN
  * Returns the found J9ClassRelationship, or NULL if it is not found.
  */
 static J9ClassRelationship *
-findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, J9UTF8 *className)
 {
 	J9ClassRelationship *classEntry = NULL;
 
-	Trc_RTV_findClassRelationship_Entry(vmThread, classNameLength, className);
+	Trc_RTV_findClassRelationship_Entry(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
 	if (NULL != classLoader->classRelationshipsHashTable) {
 		J9ClassRelationship exemplar = {0};
 		exemplar.className = className;
-		exemplar.classNameLength = classNameLength;
 		classEntry = hashTableFind(classLoader->classRelationshipsHashTable, &exemplar);
 	}
 
@@ -1150,17 +1124,15 @@ findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *cla
 static void
 freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ClassRelationship *relationship)
 {
-	PORT_ACCESS_FROM_VMC(vmThread);
 	J9ClassRelationshipNode *parentNode = NULL;
+	J9UTF8 *className = relationship->className;
 
-	Trc_RTV_freeClassRelationshipParentNodes_Entry(vmThread, relationship->classNameLength, relationship->className);
+	Trc_RTV_freeClassRelationshipParentNodes_Entry(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
 	while (NULL != relationship->root) {
 		parentNode = relationship->root;
-		Trc_RTV_freeClassRelationshipParentNodes_Parent(vmThread, parentNode->classNameLength, parentNode->className);
+		Trc_RTV_freeClassRelationshipParentNodes_Parent(vmThread, J9UTF8_LENGTH(parentNode->className), J9UTF8_DATA(parentNode->className));
 		J9_LINKED_LIST_REMOVE(relationship->root, parentNode);
-		j9mem_free_memory(parentNode->className);
-		// j9mem_free_memory(parentNode);
 		pool_removeElement(classLoader->classRelationshipsPool, parentNode);
 	}
 
@@ -1189,8 +1161,8 @@ allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm)
 
 		if (vm->systemClassLoader == classLoader) {
 			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_SYSTEM_CLASSLOADER;
-		} else if (vm->platformClassLoader == classLoader) {
-			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_PLATFORM_CLASSLOADER;
+		} else if (vm->extensionClassLoader == classLoader) {
+			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_EXTENSION_CLASSLOADER;
 		} else if (vm->applicationClassLoader == classLoader) {
 			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_APPLICATION_CLASSLOADER;
 		}
@@ -1206,14 +1178,13 @@ allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm)
 }
 
 /**
- * Frees memory for each J9ClassRelationship table entry, J9ClassRelationshipNode.
+ * Frees memory for each J9ClassRelationship table entry and J9ClassRelationshipNode.
  */
 void
 j9bcv_hashClassRelationshipTableFree(J9VMThread *vmThread, J9ClassLoader *classLoader, J9JavaVM *vm)
 {
 	/* Free the class relationships hash table if -XX:+ClassRelationshipVerifier is used */
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER)) {
-		PORT_ACCESS_FROM_VMC(vmThread);
 		J9HashTableState hashTableState = {0};
 		J9HashTable *classRelationshipsHashTable = classLoader->classRelationshipsHashTable;
 		J9ClassRelationship *relationshipEntryStart = (J9ClassRelationship *) hashTableStartDo(classRelationshipsHashTable, &hashTableState);
@@ -1223,7 +1194,6 @@ j9bcv_hashClassRelationshipTableFree(J9VMThread *vmThread, J9ClassLoader *classL
 		while (NULL != relationshipEntry) {
 			UDATA result = 0;
 			freeClassRelationshipParentNodes(vmThread, classLoader, relationshipEntry);
-			j9mem_free_memory(relationshipEntry->className);
 			result = hashTableDoRemove(&hashTableState);
 			Assert_RTV_true(0 == result);
 			relationshipEntry = (J9ClassRelationship *) hashTableNextDo(&hashTableState);
@@ -1234,31 +1204,32 @@ j9bcv_hashClassRelationshipTableFree(J9VMThread *vmThread, J9ClassLoader *classL
 }
 
 /**
- * Hash function for J9ClassRelationship entries used to keep track of
- * parent/target classes for a child/source class.
+ * Hash function for J9ClassRelationship entries.
  */
 static UDATA
 relationshipHashFn(void *key, void *userData)
 {
 	J9ClassRelationship *relationshipKey = key;
+	J9UTF8 *className = relationshipKey->className;
 	J9JavaVM *vm = userData;
 
-	UDATA utf8HashClass = J9_VM_FUNCTION_VIA_JAVAVM(vm, computeHashForUTF8)(relationshipKey->className, relationshipKey->classNameLength);
+	UDATA classNameHash = J9_VM_FUNCTION_VIA_JAVAVM(vm, computeHashForUTF8)(J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 
-	return utf8HashClass;
+	return classNameHash;
 }
 
 /**
- * Hash equal function for J9ClassRelationship entries used to keep track of
- * parent/target classes for a child/source class.
+ * Hash equal function for J9ClassRelationship entries.
  */
 static UDATA
 relationshipHashEqualFn(void *leftKey, void *rightKey, void *userData)
 {
 	J9ClassRelationship *left_relationshipKey = leftKey;
 	J9ClassRelationship *right_relationshipKey = rightKey;
+	J9UTF8 *left_className = left_relationshipKey->className;
+	J9UTF8 *right_className = right_relationshipKey->className;
 
-	UDATA classNameEqual = J9UTF8_DATA_EQUALS(left_relationshipKey->className, left_relationshipKey->classNameLength, right_relationshipKey->className, right_relationshipKey->classNameLength);
+	UDATA classNameEqual = J9UTF8_EQUALS(left_className, right_className);
 
 	return classNameEqual;
 }
