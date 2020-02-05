@@ -23,15 +23,13 @@
 #define j9relationship_h
 
 typedef struct J9ClassRelationship {
-	U_8 *className;
-	UDATA classNameLength;
+	J9UTF8 *className;
 	struct J9ClassRelationshipNode *root;
 	U_32 flags;
 } J9ClassRelationship;
 
 typedef struct J9ClassRelationshipNode {
-	U_8 *className;
-	UDATA classNameLength;
+	J9UTF8 *className;
 	struct J9ClassRelationshipNode *linkNext;
 	struct J9ClassRelationshipNode *linkPrevious;
 } J9ClassRelationshipNode;
