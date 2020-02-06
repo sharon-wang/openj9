@@ -1178,7 +1178,7 @@ j9bcv_hashClassRelationshipTableNew(J9ClassLoader *classLoader, J9JavaVM *vm)
 		if (NULL == classLoader->classRelationshipsHashTable) {
 			result = 1;
 		} else {
-			classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), J9RELATIONSHIP_NODE_COUNT_MINIMUM, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(portLib));
+			classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), J9RELATIONSHIP_NODE_COUNT_MINIMUM, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSRELATIONSHIPS, POOL_FOR_PORT(portLib));
 		}
 	}
 
