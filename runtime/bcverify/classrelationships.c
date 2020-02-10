@@ -47,6 +47,7 @@ static UDATA relationshipClassNameHashFn(void *key, void *userData);
 static UDATA relationshipClassNameHashEqualFn(void *leftKey, void *rightKey, void *userData);
 
 /* Class Relationship functions */
+static UDATA allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm);
 static J9ClassRelationshipNode *allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
 static J9ClassRelationship *findClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength);
 static void freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ClassRelationship *relationship);
@@ -875,6 +876,15 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 
 	Assert_RTV_true((NULL != childName) && (NULL != parentName));
 
+	/* If the hash table has not been allocated yet, create new hash table and pool */
+	if (NULL == classLoader->classRelationshipsHashTable) {
+		UDATA allocateResult = allocateClassRelationshipTableAndPool(classLoader, vmThread->javaVM);
+
+		if (0 != allocateResult) {
+			goto recordDone;
+		}
+	}
+
 	/* Locate existing childEntry or add new entry to the hashtable */
 	childEntry = findClassRelationship(vmThread, classLoader, childName, childNameLength);
 
@@ -1159,26 +1169,36 @@ freeClassRelationshipParentNodes(J9VMThread *vmThread, J9ClassLoader *classLoade
 }
 
 /**
- * Allocates new hash table to store class relationship entries.
- * On successful allocation of the table, also intialize memory
- * pool for class relationship nodes.
+ * Allocates new hash table to store class relationship entries
+ * and new pool to store class relationship nodes.
  *
  * Returns 0 if successful, and 1 otherwise.
  */
-UDATA
-j9bcv_hashClassRelationshipTableNew(J9ClassLoader *classLoader, J9JavaVM *vm)
+static UDATA
+allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm)
 {
 	UDATA result = 0;
 	J9PortLibrary *portLib = vm->portLibrary;
 
-	/* Allocate classRelationshipsHashTable if -XX:+ClassRelationshipVerifier is used */
-	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER)) {
-		classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(portLib), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
+	classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(portLib), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
 
-		if (NULL == classLoader->classRelationshipsHashTable) {
+	if (NULL == classLoader->classRelationshipsHashTable) {
+		result = 1;
+	} else {
+		UDATA minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM;
+
+		if (vm->systemClassLoader == classLoader) {
+			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_SYSTEM_CLASSLOADER;
+		} else if (vm->platformClassLoader == classLoader) {
+			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_PLATFORM_CLASSLOADER;
+		} else if (vm->applicationClassLoader == classLoader) {
+			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_APPLICATION_CLASSLOADER;
+		}
+
+		classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), minNumElements, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSRELATIONSHIPS, POOL_FOR_PORT(portLib));
+
+		if (NULL == classLoader->classRelationshipsPool) {
 			result = 1;
-		} else {
-			classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), J9RELATIONSHIP_NODE_COUNT_MINIMUM, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSRELATIONSHIPS, POOL_FOR_PORT(portLib));
 		}
 	}
 

@@ -169,7 +169,6 @@ allocateClassLoader(J9JavaVM *javaVM)
 	classLoader = pool_newElement(javaVM->classLoaderBlocks);
 
 	if (NULL != classLoader) {
-		UDATA classRelationshipsHashTableResult = -1;
 		/* memset not required as the classLoaderBlocks pool returns zero'd memory */
 
 		classLoader->classHashTable = hashClassTableNew(javaVM, INITIAL_CLASSHASHTABLE_SIZE);
@@ -184,16 +183,12 @@ allocateClassLoader(J9JavaVM *javaVM)
 			classLoader->classLocationHashTable = hashClassLocationTableNew(javaVM, INITIAL_CLASSLOCATION_HASHTABLE_SIZE);
 		}
 
-		/* Allocate classRelationshipsHashTable */
-		classRelationshipsHashTableResult = j9bcv_hashClassRelationshipTableNew(classLoader, javaVM);
-
 		if ((NULL == classLoader->classHashTable)
 #if JAVA_SPEC_VERSION > 8
 			|| (NULL == classLoader->moduleHashTable)
 			|| (NULL == classLoader->packageHashTable)
 #endif /* JAVA_SPEC_VERSION > 8 */
 			|| ((NULL == javaVM->systemClassLoader) && (NULL == classLoader->classLocationHashTable))
-			|| (1 == classRelationshipsHashTableResult)
 		) {
 			freeClassLoader(classLoader, javaVM, NULL, TRUE);
 			classLoader = NULL;

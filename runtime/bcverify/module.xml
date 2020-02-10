@@ -39,7 +39,6 @@
 		<export name='j9bcv_fetchClassRelationshipSnippetsFromSharedCache'/>
 		<export name='j9bcv_recordClassRelationship'/>
 		<export name='j9bcv_validateClassRelationships'/>
-		<export name='j9bcv_hashClassRelationshipTableNew'/>
 		<export name='j9bcv_hashClassRelationshipTableFree'/>
 	</exports>
 
