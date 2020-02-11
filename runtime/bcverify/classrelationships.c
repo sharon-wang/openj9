@@ -454,7 +454,7 @@ hashClassRelationshipSnippetTableNew(J9BytecodeVerificationData *verifyData)
 	J9JavaVM *vm = verifyData->javaVM;
 	UDATA result = BCV_SUCCESS;
 
-	verifyData->classRelationshipSnippetsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipSnippet), 0, 0, J9MEM_CATEGORY_CLASSES, relationshipSnippetHashFn, relationshipSnippetHashEqualFn, NULL, vm);
+	verifyData->classRelationshipSnippetsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipSnippet), 0, 0, J9MEM_CATEGORY_CLASSRELATIONSHIPS_HASHTABLE, relationshipSnippetHashFn, relationshipSnippetHashEqualFn, NULL, vm);
 
 	if (NULL == verifyData->classRelationshipSnippetsHashTable) {
 		result = BCV_ERR_INSUFFICIENT_MEMORY;
@@ -791,7 +791,7 @@ getTotalUTF8Size(J9BytecodeVerificationData *verifyData) {
 static J9HashTable *
 hashRelationshipClassNameTableNew(J9JavaVM *vm)
 {
-	J9HashTable *relationshipClassNameHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipClassName), 0, 0, J9MEM_CATEGORY_CLASSES, relationshipClassNameHashFn, relationshipClassNameHashEqualFn, NULL, vm);
+	J9HashTable *relationshipClassNameHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipClassName), 0, 0, J9MEM_CATEGORY_CLASSRELATIONSHIPS_HASHTABLE, relationshipClassNameHashFn, relationshipClassNameHashEqualFn, NULL, vm);
 
 	return relationshipClassNameHashTable;
 }
@@ -889,7 +889,7 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 	childEntry = findClassRelationship(vmThread, classLoader, childName, childNameLength);
 
 	if (NULL == childEntry) {
-		child.className = (U_8 *) j9mem_allocate_memory(childNameLength + 1, J9MEM_CATEGORY_CLASSES);
+		child.className = (U_8 *) j9mem_allocate_memory(childNameLength + 1, J9MEM_CATEGORY_CLASSRELATIONSHIPS_STRINGS);
 
 		/* className for child successfully allocated, continue initialization of child entry */
 		if (NULL != child.className) {
@@ -1038,7 +1038,7 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 			if (NULL == parentEntry) {
 				J9ClassRelationship parent = {0};
 				PORT_ACCESS_FROM_VMC(vmThread);
-				parent.className = (U_8 *) j9mem_allocate_memory(parentNode->classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+				parent.className = (U_8 *) j9mem_allocate_memory(parentNode->classNameLength + 1, J9MEM_CATEGORY_CLASSRELATIONSHIPS_STRINGS);
 
 				/* className for parent successfully allocated, continue initialization of parent entry */
 				if (NULL != parent.className) {
@@ -1105,7 +1105,7 @@ allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *classN
 	// J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) j9mem_allocate_memory(sizeof(J9ClassRelationshipNode), J9MEM_CATEGORY_CLASSES);
 
 	if (NULL != parentNode) {
-		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSRELATIONSHIPS_STRINGS);
 
 		if (NULL != parentNode->className) {
 			memcpy(parentNode->className, className, classNameLength);
@@ -1180,7 +1180,7 @@ allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm)
 	UDATA result = 0;
 	J9PortLibrary *portLib = vm->portLibrary;
 
-	classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(portLib), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
+	classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(portLib), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSRELATIONSHIPS_HASHTABLE, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
 
 	if (NULL == classLoader->classRelationshipsHashTable) {
 		result = 1;
