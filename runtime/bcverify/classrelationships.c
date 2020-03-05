@@ -31,8 +31,8 @@ static void processClassRelationshipSnippetsNoCachedData(J9BytecodeVerificationD
 static void processClassRelationshipSnippetsUsingCachedData(J9BytecodeVerificationData *verifyData, uint8_t *snippetsDataDescriptorAddress, IDATA *reasonCode);
 static void checkSnippetRelationship(J9BytecodeVerificationData *verifyData, U_8 *sourceClassName, UDATA sourceClassNameLength, U_8 *targetClassName, UDATA targetClassNameLength, IDATA *reasonCode);
 static char *generateClassRelationshipSnippetsKey(J9JavaVM *vm, J9VMThread *vmThread, U_8 *className, UDATA classNameLength);
-static IDATA hashClassRelationshipSnippetTableNew(J9BytecodeVerificationData *verifyData);
-static void hashClassRelationshipSnippetTableFree(J9BytecodeVerificationData *verifyData);
+static IDATA allocateClassRelationshipSnippetsHashTable(J9BytecodeVerificationData *verifyData);
+static void freeClassRelationshipSnippetsHashTable(J9BytecodeVerificationData *verifyData);
 static UDATA relationshipSnippetHashFn(void *key, void *userData);
 static UDATA relationshipSnippetHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA getTotalUTF8Size(J9BytecodeVerificationData *verifyData);
@@ -70,13 +70,20 @@ j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDA
 {
 	J9VMThread *vmThread = verifyData->vmStruct;
 	J9ClassRelationshipSnippet *snippetEntry = NULL;
-	IDATA recordResult = TRUE;
+	IDATA recordResult = FALSE;
 	J9ClassRelationshipSnippet exemplar = {0};
 	*reasonCode = BCV_SUCCESS;
 
 	Trc_RTV_recordClassRelationshipSnippet_Entry(vmThread, sourceClassIndex, targetClassIndex);
 
-	Assert_RTV_true(NULL != verifyData->classRelationshipSnippetsHashTable);
+	/* If the snippet hash table has not been allocated yet, create it */
+	if (NULL == verifyData->classRelationshipSnippetsHashTable) {
+		*reasonCode = allocateClassRelationshipSnippetsHashTable(verifyData);
+
+		if (BCV_SUCCESS != *reasonCode) {
+			goto doneRecordSnippet;
+		}
+	}
 
 	exemplar.sourceClassNameIndex = sourceClassIndex;
 	exemplar.targetClassNameIndex = targetClassIndex;
@@ -88,10 +95,12 @@ j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDA
 		if (NULL == snippetEntry) {
 			Trc_RTV_recordClassRelationshipSnippet_EntryAllocationFailed(vmThread);
 			*reasonCode = BCV_ERR_INSUFFICIENT_MEMORY;
-			recordResult = FALSE;
+		} else {
+			recordResult = TRUE;
 		}
 	}
 
+doneRecordSnippet:
 	Trc_RTV_recordClassRelationshipSnippet_Exit(vmThread, snippetEntry, *reasonCode);
 	return recordResult;
 }
@@ -121,10 +130,14 @@ j9bcv_processClassRelationshipSnippets(J9BytecodeVerificationData *verifyData, J
 		Trc_RTV_processClassRelationshipSnippets_UsingCachedData(vmThread);
 		processClassRelationshipSnippetsUsingCachedData(verifyData, snippetsDataDescriptorAddress, &processResult);
 	} else {
-		/* Initial run/No cached snippets: Process snippets using local hash table */
-		Trc_RTV_processClassRelationshipSnippets_NoCachedData(vmThread);
-		processClassRelationshipSnippetsNoCachedData(verifyData, &processResult);
-		hashClassRelationshipSnippetTableFree(verifyData);
+		if (NULL == verifyData->classRelationshipSnippetsHashTable) {
+			/* No snippets were stored for this romClass */
+		} else {
+			/* Initial run/No cached snippets: Process snippets using local hash table */
+			Trc_RTV_processClassRelationshipSnippets_NoCachedData(vmThread);
+			processClassRelationshipSnippetsNoCachedData(verifyData, &processResult);
+			freeClassRelationshipSnippetsHashTable(verifyData);
+		}
 	}
 
 	Trc_RTV_processClassRelationshipSnippets_Exit(vmThread, processResult);
@@ -268,7 +281,7 @@ generateClassRelationshipSnippetsKey(J9JavaVM *vm, J9VMThread *vmThread, U_8 *cl
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	UDATA keyLength = classNameLength + 1;
-	char *key = (char *) j9mem_allocate_memory(keyLength, J9MEM_CATEGORY_VM);
+	char *key = (char *) j9mem_allocate_memory(keyLength, J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS);
 
 	if (NULL != key) {
 		memcpy(key, className, classNameLength);
@@ -303,13 +316,17 @@ j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *ve
 	J9VMThread *vmThread = verifyData->vmStruct;
 	J9ROMClass *romClass = verifyData->romClass;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA snippetCount = hashTableGetCount(verifyData->classRelationshipSnippetsHashTable);
+	UDATA snippetCount = 0;
 	char *key = NULL;
 	IDATA storeResult = BCV_SUCCESS;
 	U_8 *className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
 	UDATA classNameLength = (UDATA) J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass)));
 
 	Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Entry(vmThread, classNameLength, className);
+
+	if (NULL != verifyData->classRelationshipSnippetsHashTable) {
+		snippetCount = hashTableGetCount(verifyData->classRelationshipSnippetsHashTable);
+	}
 
 	if (0 == snippetCount) {
 		Trc_RTV_storeClassRelationshipSnippetsToSharedCache_NoSnippets(vmThread);
@@ -331,7 +348,7 @@ j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *ve
 		UDATA utf8SizeTotal = getTotalUTF8Size(verifyData);
 		UDATA dataBufferSize = headerSize + snippetsSizeTotal + utf8SizeTotal;
 
-		uint8_t *dataBuffer = (uint8_t *) j9mem_allocate_memory(dataBufferSize, J9MEM_CATEGORY_VM);
+		uint8_t *dataBuffer = (uint8_t *) j9mem_allocate_memory(dataBufferSize, J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS);
 
 		Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Allocation(vmThread, dataBufferSize, snippetCount);
 
@@ -395,7 +412,7 @@ doneStoreSnippets:
  * Returns TRUE if snippets for the romClass are found in the cache, otherwise returns FALSE
  */
 BOOLEAN
-j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *snippetTableAllocationResult)
+j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *fetchResult)
 {
 	J9JavaVM *vm = verifyData->javaVM;
 	J9VMThread *vmThread = verifyData->vmStruct;
@@ -407,6 +424,7 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
 	U_8 *className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
 	UDATA classNameLength = (UDATA) J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass)));
 	char *key = generateClassRelationshipSnippetsKey(vm, vmThread, className, classNameLength);
+	*fetchResult = BCV_SUCCESS;
 
 	Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Entry(vmThread, classNameLength, className);
 
@@ -420,20 +438,21 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
 			Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_FoundSnippets(vmThread);
 			foundSnippets = TRUE;
 		} else {
+			/* Initial run: use hashtable in verifyData to hold snippets to be stored to shared cache */
 			snippetsDataDescriptor = NULL;
 
-			if (0 == findSharedDataResult) {
-				/* Initial run: allocate hashtable in verifyData to hold snippets to be stored to shared cache */
-				/* *snippetTableAllocationResult = BCV_SUCCESS if table allocated successfully, BCV_ERR_INSUFFICIENT_MEMORY on OOM */
-				*snippetTableAllocationResult = hashClassRelationshipSnippetTableNew(verifyData);
-			} else {
+			if (-1 == findSharedDataResult) {
 				Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Error(vmThread);
+				*fetchResult = BCV_ERR_INTERNAL_ERROR;
 			}
 		}
+	} else {
+		Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Error(vmThread);
+		*fetchResult = BCV_ERR_INTERNAL_ERROR;
 	}
 
 	j9mem_free_memory(key);
-	Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Exit(vmThread, findSharedDataResult, *snippetTableAllocationResult);
+	Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Exit(vmThread, findSharedDataResult, *fetchResult);
 
 	return foundSnippets;
 }
@@ -444,18 +463,18 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
  * Returns BCV_SUCCESS if successful and BCV_ERR_INSUFFICIENT_MEMORY on OOM.
  */
 static IDATA
-hashClassRelationshipSnippetTableNew(J9BytecodeVerificationData *verifyData)
+allocateClassRelationshipSnippetsHashTable(J9BytecodeVerificationData *verifyData)
 {
 	J9JavaVM *vm = verifyData->javaVM;
-	UDATA result = BCV_SUCCESS;
+	IDATA reasonCode = BCV_SUCCESS;
 
-	verifyData->classRelationshipSnippetsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipSnippet), 0, 0, J9MEM_CATEGORY_CLASSES, relationshipSnippetHashFn, relationshipSnippetHashEqualFn, NULL, vm);
+	verifyData->classRelationshipSnippetsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipSnippet), 0, 0, J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS, relationshipSnippetHashFn, relationshipSnippetHashEqualFn, NULL, vm);
 
 	if (NULL == verifyData->classRelationshipSnippetsHashTable) {
-		result = BCV_ERR_INSUFFICIENT_MEMORY;
+		reasonCode = BCV_ERR_INSUFFICIENT_MEMORY;
 	}
 
-	return result;
+	return reasonCode;
 }
 
 /**
@@ -463,22 +482,22 @@ hashClassRelationshipSnippetTableNew(J9BytecodeVerificationData *verifyData)
  * and the classRelationshipSnippets hash table itself.
  */
 static void
-hashClassRelationshipSnippetTableFree(J9BytecodeVerificationData *verifyData)
+freeClassRelationshipSnippetsHashTable(J9BytecodeVerificationData *verifyData)
 {
-	J9HashTableState hashTableState = {0};
-	J9HashTable *classRelationshipSnippetsHashTable = verifyData->classRelationshipSnippetsHashTable;
-	J9ClassRelationshipSnippet *snippetEntryStart = (J9ClassRelationshipSnippet *) hashTableStartDo(classRelationshipSnippetsHashTable, &hashTableState);
-	J9ClassRelationshipSnippet *snippetEntry = snippetEntryStart;
-	UDATA result = 0;
+	if (NULL != verifyData->classRelationshipSnippetsHashTable) {
+		J9HashTableState hashTableState = {0};
+		J9ClassRelationshipSnippet *snippetEntryStart = (J9ClassRelationshipSnippet *) hashTableStartDo(verifyData->classRelationshipSnippetsHashTable, &hashTableState);
+		J9ClassRelationshipSnippet *snippetEntry = snippetEntryStart;
 
-	while (NULL != snippetEntry) {
-		result = hashTableDoRemove(&hashTableState);
-		Assert_RTV_true(0 == result);
-		snippetEntry = (J9ClassRelationshipSnippet *) hashTableNextDo(&hashTableState);
+		while (NULL != snippetEntry) {
+			UDATA result = hashTableDoRemove(&hashTableState);
+			Assert_RTV_true(0 == result);
+			snippetEntry = (J9ClassRelationshipSnippet *) hashTableNextDo(&hashTableState);
+		}
+
+		hashTableFree(verifyData->classRelationshipSnippetsHashTable);
+		verifyData->classRelationshipSnippetsHashTable = NULL;
 	}
-
-	hashTableFree(classRelationshipSnippetsHashTable);
-	verifyData->classRelationshipSnippetsHashTable = NULL;
 
 	return;
 }
@@ -690,7 +709,7 @@ getUTF8AddressFromArray(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF
 
 	if (!foundExisting) {
 		PORT_ACCESS_FROM_JAVAVM(verifyData->javaVM);
-		J9ClassRelationshipClassNameIndex *classNameIndexEntry = (J9ClassRelationshipClassNameIndex *) j9mem_allocate_memory(sizeof(J9ClassRelationshipClassNameIndex), J9MEM_CATEGORY_VM);
+		J9ClassRelationshipClassNameIndex *classNameIndexEntry = (J9ClassRelationshipClassNameIndex *) j9mem_allocate_memory(sizeof(J9ClassRelationshipClassNameIndex), J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS);
 
 		if (NULL != classNameIndexEntry) {
 			UDATA utf8AddressSize = setCurrentAndNextUTF8s(verifyData, &utf8Address, nextUTF8Address, classNameIndex);
@@ -785,7 +804,7 @@ getTotalUTF8Size(J9BytecodeVerificationData *verifyData) {
 static J9HashTable *
 hashRelationshipClassNameTableNew(J9JavaVM *vm)
 {
-	J9HashTable *relationshipClassNameHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipClassName), 0, 0, J9MEM_CATEGORY_CLASSES, relationshipClassNameHashFn, relationshipClassNameHashEqualFn, NULL, vm);
+	J9HashTable *relationshipClassNameHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 100, sizeof(J9ClassRelationshipClassName), 0, 0, J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS, relationshipClassNameHashFn, relationshipClassNameHashEqualFn, NULL, vm);
 
 	return relationshipClassNameHashTable;
 }
@@ -882,7 +901,7 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 
 	if (NULL == childEntry) {
 		PORT_ACCESS_FROM_VMC(vmThread);
-		child.className = (U_8 *) j9mem_allocate_memory(childNameLength + 1, J9MEM_CATEGORY_CLASSES);
+		child.className = (U_8 *) j9mem_allocate_memory(childNameLength + 1, J9MEM_CATEGORY_CLASSES_CRV_RELATIONSHIPS);
 
 		/* className for child successfully allocated, continue initialization of child entry */
 		if (NULL != child.className) {
@@ -1030,7 +1049,7 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 
 			if (NULL == parentEntry) {
 				J9ClassRelationship parent = {0};
-				parent.className = (U_8 *) j9mem_allocate_memory(parentNode->classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+				parent.className = (U_8 *) j9mem_allocate_memory(parentNode->classNameLength + 1, J9MEM_CATEGORY_CLASSES_CRV_RELATIONSHIPS);
 
 				/* className for parent successfully allocated, continue initialization of parent entry */
 				if (NULL != parent.className) {
@@ -1096,7 +1115,7 @@ allocateParentNode(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *classN
 	J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) pool_newElement(classLoader->classRelationshipsPool);
 
 	if (NULL != parentNode) {
-		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES_CRV_RELATIONSHIPS);
 
 		if (NULL != parentNode->className) {
 			memcpy(parentNode->className, className, classNameLength);
@@ -1168,7 +1187,7 @@ allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm)
 {
 	UDATA result = 0;
 
-	classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
+	classLoader->classRelationshipsHashTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 256, sizeof(J9ClassRelationship), sizeof(char *), 0, J9MEM_CATEGORY_CLASSES_CRV_RELATIONSHIPS, relationshipHashFn, relationshipHashEqualFn, NULL, vm);
 
 	if (NULL == classLoader->classRelationshipsHashTable) {
 		result = 1;
@@ -1183,7 +1202,7 @@ allocateClassRelationshipTableAndPool(J9ClassLoader *classLoader, J9JavaVM *vm)
 			minNumElements = J9RELATIONSHIP_NODE_COUNT_MINIMUM_APPLICATION_CLASSLOADER;
 		}
 
-		classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), minNumElements, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
+		classLoader->classRelationshipsPool = pool_new(sizeof(J9ClassRelationshipNode), minNumElements, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES_CRV_RELATIONSHIPS, POOL_FOR_PORT(vm->portLibrary));
 
 		if (NULL == classLoader->classRelationshipsPool) {
 			result = 1;
