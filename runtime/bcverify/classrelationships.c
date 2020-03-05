@@ -70,13 +70,20 @@ j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDA
 {
 	J9VMThread *vmThread = verifyData->vmStruct;
 	J9ClassRelationshipSnippet *snippetEntry = NULL;
-	IDATA recordResult = TRUE;
+	IDATA recordResult = FALSE;
 	J9ClassRelationshipSnippet exemplar = {0};
 	*reasonCode = BCV_SUCCESS;
 
 	Trc_RTV_recordClassRelationshipSnippet_Entry(vmThread, sourceClassIndex, targetClassIndex);
 
-	Assert_RTV_true(NULL != verifyData->classRelationshipSnippetsHashTable);
+	/* If the snippet hash table has not been allocated yet, create it */
+	if (NULL == verifyData->classRelationshipSnippetsHashTable) {
+		*reasonCode = hashClassRelationshipSnippetTableNew(verifyData);
+
+		if (BCV_SUCCESS != *reasonCode) {
+			goto doneRecordSnippet;
+		}
+	}
 
 	exemplar.sourceClassNameIndex = sourceClassIndex;
 	exemplar.targetClassNameIndex = targetClassIndex;
@@ -88,10 +95,12 @@ j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDA
 		if (NULL == snippetEntry) {
 			Trc_RTV_recordClassRelationshipSnippet_EntryAllocationFailed(vmThread);
 			*reasonCode = BCV_ERR_INSUFFICIENT_MEMORY;
-			recordResult = FALSE;
+		} else {
+			recordResult = TRUE;
 		}
 	}
 
+doneRecordSnippet:
 	Trc_RTV_recordClassRelationshipSnippet_Exit(vmThread, snippetEntry, *reasonCode);
 	return recordResult;
 }
@@ -121,10 +130,14 @@ j9bcv_processClassRelationshipSnippets(J9BytecodeVerificationData *verifyData, J
 		Trc_RTV_processClassRelationshipSnippets_UsingCachedData(vmThread);
 		processClassRelationshipSnippetsUsingCachedData(verifyData, snippetsDataDescriptorAddress, &processResult);
 	} else {
-		/* Initial run/No cached snippets: Process snippets using local hash table */
-		Trc_RTV_processClassRelationshipSnippets_NoCachedData(vmThread);
-		processClassRelationshipSnippetsNoCachedData(verifyData, &processResult);
-		hashClassRelationshipSnippetTableFree(verifyData);
+		if (NULL == verifyData->classRelationshipSnippetsHashTable) {
+			/* No snippets were stored for this romClass */
+		} else {
+			/* Initial run/No cached snippets: Process snippets using local hash table */
+			Trc_RTV_processClassRelationshipSnippets_NoCachedData(vmThread);
+			processClassRelationshipSnippetsNoCachedData(verifyData, &processResult);
+			hashClassRelationshipSnippetTableFree(verifyData);
+		}
 	}
 
 	Trc_RTV_processClassRelationshipSnippets_Exit(vmThread, processResult);
@@ -213,6 +226,12 @@ checkSnippetRelationship(J9BytecodeVerificationData *verifyData, J9UTF8 *sourceC
 	UDATA targetClassNameLength = J9UTF8_LENGTH(targetClassUTF8);
 	*reasonCode = BCV_SUCCESS;
 
+	Assert_RTV_true((NULL != sourceClassUTF8) && (NULL != targetClassUTF8));
+	sourceClassName = J9UTF8_DATA(sourceClassUTF8);
+	targetClassName = J9UTF8_DATA(targetClassUTF8);
+	sourceClassNameLength = J9UTF8_LENGTH(sourceClassUTF8);
+	targetClassNameLength = J9UTF8_LENGTH(targetClassUTF8);
+
 	/* Check if the targetClass is already loaded */
 	targetClass = vm->internalVMFunctions->hashClassTableAt(classLoader, targetClassName, targetClassNameLength);
 
@@ -293,13 +312,17 @@ j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *ve
 	J9VMThread *vmThread = verifyData->vmStruct;
 	J9ROMClass *romClass = verifyData->romClass;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA snippetCount = hashTableGetCount(verifyData->classRelationshipSnippetsHashTable);
+	UDATA snippetCount = 0;
 	char *key = NULL;
 	IDATA storeResult = BCV_SUCCESS;
 	U_8 *className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
 	UDATA classNameLength = (UDATA) J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass)));
 
 	Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Entry(vmThread, classNameLength, className);
+
+	if (NULL != verifyData->classRelationshipSnippetsHashTable) {
+		snippetCount = hashTableGetCount(verifyData->classRelationshipSnippetsHashTable);
+	}
 
 	if (0 == snippetCount) {
 		Trc_RTV_storeClassRelationshipSnippetsToSharedCache_NoSnippets(vmThread);
@@ -385,7 +408,7 @@ doneStoreSnippets:
  * Returns TRUE if snippets for the romClass are found in the cache, otherwise returns FALSE
  */
 BOOLEAN
-j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *snippetTableAllocationResult)
+j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *fetchResult)
 {
 	J9JavaVM *vm = verifyData->javaVM;
 	J9VMThread *vmThread = verifyData->vmStruct;
@@ -397,6 +420,7 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
 	U_8 *className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
 	UDATA classNameLength = (UDATA) J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass)));
 	char *key = generateClassRelationshipSnippetsKey(vm, vmThread, className, classNameLength);
+	*fetchResult = BCV_SUCCESS;
 
 	Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Entry(vmThread, classNameLength, className);
 
@@ -405,25 +429,24 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
 		/* findSharedData() returns the number of data elements found or -1 in the case of error */
 		findSharedDataResult = sharedClassConfig->findSharedData(vmThread, key, keyLength, J9SHR_DATA_TYPE_CRVSNIPPET, 0, snippetsDataDescriptor, NULL);
 
-		if (findSharedDataResult > 0) {
+		if (-1 == findSharedDataResult) {
+			Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Error(vmThread);
+			*fetchResult = BCV_ERR_INTERNAL_ERROR;
+		} else if (0 < findSharedDataResult) {
 			/* Subsequent run: snippets already exist in shared cache */
 			Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_FoundSnippets(vmThread);
 			foundSnippets = TRUE;
-		} else {
+		} else if (0 == findSharedDataResult) {
+			/* Initial run: use hashtable in verifyData to hold snippets to be stored to shared cache */
 			snippetsDataDescriptor = NULL;
-
-			if (0 == findSharedDataResult) {
-				/* Initial run: allocate hashtable in verifyData to hold snippets to be stored to shared cache */
-				/* *snippetTableAllocationResult = BCV_SUCCESS if table allocated successfully, BCV_ERR_INSUFFICIENT_MEMORY on OOM */
-				*snippetTableAllocationResult = hashClassRelationshipSnippetTableNew(verifyData);
-			} else {
-				Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Error(vmThread);
-			}
 		}
+	} else {
+		Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Error(vmThread);
+		*fetchResult = BCV_ERR_INTERNAL_ERROR;
 	}
 
 	j9mem_free_memory(key);
-	Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Exit(vmThread, findSharedDataResult, *snippetTableAllocationResult);
+	Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Exit(vmThread, findSharedDataResult, *fetchResult);
 
 	return foundSnippets;
 }
@@ -456,10 +479,16 @@ static void
 hashClassRelationshipSnippetTableFree(J9BytecodeVerificationData *verifyData)
 {
 	J9HashTableState hashTableState = {0};
-	J9HashTable *classRelationshipSnippetsHashTable = verifyData->classRelationshipSnippetsHashTable;
-	J9ClassRelationshipSnippet *snippetEntryStart = (J9ClassRelationshipSnippet *) hashTableStartDo(classRelationshipSnippetsHashTable, &hashTableState);
-	J9ClassRelationshipSnippet *snippetEntry = snippetEntryStart;
+	J9ClassRelationshipSnippet *snippetEntryStart = NULL;
+	J9ClassRelationshipSnippet *snippetEntry = NULL;
 	UDATA result = 0;
+
+	if (NULL == verifyData->classRelationshipSnippetsHashTable) {
+		goto doneFreeSnippets;
+	}
+
+	snippetEntryStart = (J9ClassRelationshipSnippet *) hashTableStartDo(verifyData->classRelationshipSnippetsHashTable, &hashTableState);
+	snippetEntry = snippetEntryStart;
 
 	while (NULL != snippetEntry) {
 		result = hashTableDoRemove(&hashTableState);
@@ -467,9 +496,10 @@ hashClassRelationshipSnippetTableFree(J9BytecodeVerificationData *verifyData)
 		snippetEntry = (J9ClassRelationshipSnippet *) hashTableNextDo(&hashTableState);
 	}
 
-	hashTableFree(classRelationshipSnippetsHashTable);
+	hashTableFree(verifyData->classRelationshipSnippetsHashTable);
 	verifyData->classRelationshipSnippetsHashTable = NULL;
 
+doneFreeSnippets:
 	return;
 }
 

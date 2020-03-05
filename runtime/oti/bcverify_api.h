@@ -243,11 +243,11 @@ j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *ve
  *
  * @param *verifyData Bytecode verification data for the romClass
  * @param *snippetsDataDescriptor Pointer to the descriptor where the snippet data will be stored to
- * @param *snippetTableAllocationResult Default BCV_SUCCESS, BCV_ERR_INSUFFICIENT_MEMORY on OOM
+ * @param *fetchResult Default BCV_SUCCESS, BCV_ERR_INTERNAL_ERROR if an error occurs
  * @return BOOLEAN Returns TRUE if snippets are found in the cache, FALSE otherwise
  */
 BOOLEAN
-j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *snippetTableAllocationResult);
+j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *fetchResult);
 
 /**
  * Class Relationships APIs (J9ClassRelationship)
