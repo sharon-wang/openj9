@@ -37,15 +37,15 @@ typedef struct J9ClassRelationshipNode {
 } J9ClassRelationshipNode;
 
 typedef struct J9ClassRelationshipSnippet {
-	UDATA sourceClassNameIndex;
-	UDATA targetClassNameIndex;
+	UDATA childClassNameIndex;
+	UDATA parentClassNameIndex;
 } J9ClassRelationshipSnippet;
 
 typedef UDATA J9SharedClassRelationshipHeader;
 
 typedef struct J9SharedClassRelationshipSnippet {
-	J9SRP sourceClassName;
-	J9SRP targetClassName;
+	J9SRP childClassName;
+	J9SRP parentClassName;
 } J9SharedClassRelationshipSnippet;
 
 /* Structure used for hashtable mapping of class names to local data buffer */
@@ -73,6 +73,6 @@ typedef struct J9ClassRelationshipClassNameIndex {
 
 /* Bits for J9ClassRelationship flags field */
 #define J9RELATIONSHIP_MUST_BE_INTERFACE 0x1
-#define J9RELATIONSHIP_PARENT_IS_THROWABLE 0x2
+#define J9RELATIONSHIP_PARENT_CLASS_IS_THROWABLE 0x2
 
 #endif /* j9relationship_h */

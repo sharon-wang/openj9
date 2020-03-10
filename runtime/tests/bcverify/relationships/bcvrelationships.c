@@ -25,9 +25,8 @@
 #include "omrlinkedlist.h"
 
 /**
- * Check if a relationship has been recorded in the
- * classloader relationship table for the specified
- * child class and parent class.
+ * Check if a relationship has been recorded in the classloader relationship table for the
+ * specified child class and parent class.
  *
  * Class: org_openj9_test_classRelationshipVerifier_TestClassRelationshipVerifier
  * Method: isRelationshipRecorded
