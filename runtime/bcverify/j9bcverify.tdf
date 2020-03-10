@@ -236,7 +236,7 @@ TraceExit=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Exit Overhead=1 Le
 TraceEvent=Trc_RTV_storeToDataBuffer_Hashtable Overhead=1 Level=3 Template="storeToDataBuffer - using hashtable to map snippet indices to class names"
 TraceEvent=Trc_RTV_storeToDataBuffer_Array Overhead=1 Level=3 Template="storeToDataBuffer - using array to map snippet indices to class names"
 TraceException=Trc_RTV_storeToDataBuffer_HashtableAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate hash table"
-TraceException=Trc_RTV_storeToDataBuffer_ArrayAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate array"
+TraceException=Trc_RTV_storeToDataBuffer_PoolAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate pool for class name indices"
 TraceEvent=Trc_RTV_storeToDataBuffer_StoredSnippet Overhead=1 Level=3 Template="storeToDataBuffer - stored snippet for child: %.*s, parent: %.*s"
 TraceException=Trc_RTV_storeToDataBuffer_getUTF8AddressFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to get UTF8 address for class at index %d in classNameList"
 

@@ -39,7 +39,7 @@ static UDATA getTotalUTF8Size(J9BytecodeVerificationData *verifyData);
 static IDATA storeToDataBuffer(J9BytecodeVerificationData *verifyData, uint8_t *dataBuffer, J9SharedClassRelationshipSnippet *dataBufferSnippetStart, J9UTF8 *dataBufferUTF8Start, UDATA snippetCount);
 static UDATA setCurrentAndNextUTF8s(J9BytecodeVerificationData *verifyData, J9UTF8 **utf8Address, J9UTF8 **nextUTF8Address, UDATA classNameIndex);
 static J9UTF8 *getUTF8Address(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF8Address, UDATA classNameIndex);
-static J9UTF8 *getUTF8AddressFromArray(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF8Address, J9ClassRelationshipClassNameIndex **classNamesArray, UDATA totalNumberOfIndices, UDATA classNameIndex);
+static J9UTF8 *getUTF8AddressFromArray(J9BytecodeVerificationData *verifyData, J9Pool *classNameIndexPool, J9UTF8 **nextUTF8Address, J9ClassRelationshipClassNameIndex **classNamesArray, UDATA totalNumberOfIndices, UDATA classNameIndex);
 static J9UTF8 *getUTF8AddressFromHashTable(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF8Address, J9HashTable *table, UDATA classNameIndex);
 static J9HashTable *hashRelationshipClassNameTableNew(J9JavaVM *vm);
 static void hashClassRelationshipClassNameTableFree(J9VMThread *vmThread, J9HashTable *relationshipClassNameHashTable);
@@ -558,6 +558,7 @@ storeToDataBuffer(J9BytecodeVerificationData *verifyData, uint8_t *dataBuffer, J
 	J9HashTable *classNamesHashTable = NULL;
 	UDATA totalNumberOfIndices = snippetCount * 2;
 	J9ClassRelationshipClassNameIndex *classNamesArray[J9RELATIONSHIP_SNIPPET_COUNT_THRESHOLD * 2] = {0};
+	J9Pool *classNameIndexPool = NULL;
 
 	if (1 != snippetCount) {
 		if (snippetCount > J9RELATIONSHIP_SNIPPET_COUNT_THRESHOLD) {
@@ -576,6 +577,13 @@ storeToDataBuffer(J9BytecodeVerificationData *verifyData, uint8_t *dataBuffer, J
 			/* Use array to store class name mappings */
 			Trc_RTV_storeToDataBuffer_Array(vmThread);
 			snippetConfig = J9RELATIONSHIP_SNIPPET_USE_ARRAY;
+			classNameIndexPool = pool_new(sizeof(J9ClassRelationshipNode), 2, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS, POOL_FOR_PORT(vm->portLibrary));
+
+			if (NULL == classNameIndexPool) {
+				Trc_RTV_storeToDataBuffer_PoolAllocationFailed(vmThread);
+				storeResult = BCV_ERR_INSUFFICIENT_MEMORY;
+				goto doneStoreToDataBuffer;
+			}
 		}
 	}
 
@@ -589,7 +597,7 @@ storeToDataBuffer(J9BytecodeVerificationData *verifyData, uint8_t *dataBuffer, J
 		if (J9RELATIONSHIP_SNIPPET_USE_HASHTABLE == snippetConfig) {
 			childClassUTF8Address = getUTF8AddressFromHashTable(verifyData, &nextUTF8Address, classNamesHashTable, snippetEntry->childClassNameIndex);
 		} else if (J9RELATIONSHIP_SNIPPET_USE_ARRAY == snippetConfig) {
-			childClassUTF8Address = getUTF8AddressFromArray(verifyData, &nextUTF8Address, classNamesArray, totalNumberOfIndices, snippetEntry->childClassNameIndex);
+			childClassUTF8Address = getUTF8AddressFromArray(verifyData, classNameIndexPool, &nextUTF8Address, classNamesArray, totalNumberOfIndices, snippetEntry->childClassNameIndex);
 		} else {
 			childClassUTF8Address = getUTF8Address(verifyData, &nextUTF8Address, snippetEntry->childClassNameIndex);
 		}
@@ -603,7 +611,7 @@ storeToDataBuffer(J9BytecodeVerificationData *verifyData, uint8_t *dataBuffer, J
 		if (J9RELATIONSHIP_SNIPPET_USE_HASHTABLE == snippetConfig) {
 			parentClassUTF8Address = getUTF8AddressFromHashTable(verifyData, &nextUTF8Address, classNamesHashTable, snippetEntry->parentClassNameIndex);
 		} else if (J9RELATIONSHIP_SNIPPET_USE_ARRAY == snippetConfig) {
-			parentClassUTF8Address = getUTF8AddressFromArray(verifyData, &nextUTF8Address, classNamesArray, totalNumberOfIndices, snippetEntry->parentClassNameIndex);
+			parentClassUTF8Address = getUTF8AddressFromArray(verifyData, classNameIndexPool, &nextUTF8Address, classNamesArray, totalNumberOfIndices, snippetEntry->parentClassNameIndex);
 		} else {
 			parentClassUTF8Address = getUTF8Address(verifyData, &nextUTF8Address, snippetEntry->parentClassNameIndex);
 		}
@@ -626,9 +634,13 @@ storeToDataBuffer(J9BytecodeVerificationData *verifyData, uint8_t *dataBuffer, J
 	}
 
 doneStoreToDataBuffer:
-	/* Free hashtable if used to store class name mappings */
 	if (J9RELATIONSHIP_SNIPPET_USE_HASHTABLE == snippetConfig) {
+		/* Free hashtable if used to store class name mappings */
 		hashClassRelationshipClassNameTableFree(vmThread, classNamesHashTable);
+	} else if (NULL != classNameIndexPool) {
+		/* Free pool if used to allocate memory for class name indices */
+		pool_kill(classNameIndexPool);
+		classNameIndexPool = NULL;
 	}
 
 	return storeResult;
@@ -688,7 +700,7 @@ getUTF8Address(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF8Address,
  * Returns the J9UTF8 address where the class name is stored in the data buffer.
  */
 static J9UTF8 *
-getUTF8AddressFromArray(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF8Address, J9ClassRelationshipClassNameIndex **classNamesArray, UDATA totalNumberOfIndices, UDATA classNameIndex)
+getUTF8AddressFromArray(J9BytecodeVerificationData *verifyData, J9Pool *classNameIndexPool, J9UTF8 **nextUTF8Address, J9ClassRelationshipClassNameIndex **classNamesArray, UDATA totalNumberOfIndices, UDATA classNameIndex)
 {
 	J9UTF8 *utf8Address = NULL;
 	BOOLEAN foundExisting = FALSE;
@@ -708,8 +720,7 @@ getUTF8AddressFromArray(J9BytecodeVerificationData *verifyData, J9UTF8 **nextUTF
 	}
 
 	if (!foundExisting) {
-		PORT_ACCESS_FROM_JAVAVM(verifyData->javaVM);
-		J9ClassRelationshipClassNameIndex *classNameIndexEntry = (J9ClassRelationshipClassNameIndex *) j9mem_allocate_memory(sizeof(J9ClassRelationshipClassNameIndex), J9MEM_CATEGORY_CLASSES_CRV_SNIPPETS);
+		J9ClassRelationshipClassNameIndex *classNameIndexEntry = (J9ClassRelationshipClassNameIndex *) pool_newElement(classNameIndexPool);
 
 		if (NULL != classNameIndexEntry) {
 			UDATA utf8AddressSize = setCurrentAndNextUTF8s(verifyData, &utf8Address, nextUTF8Address, classNameIndex);
