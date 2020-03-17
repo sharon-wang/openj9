@@ -209,18 +209,18 @@ TraceExit=Trc_RTV_validateClassRelationships_Exit Overhead=1 Level=3 Template="v
 TraceEntry=Trc_RTV_findClassRelationship_Entry Overhead=1 Level=3 Template="findClassRelationship - class: %.*s"
 TraceExit=Trc_RTV_findClassRelationship_Exit Overhead=1 Level=3 Template="findClassRelationship - returning %p"
 
-TraceEntry=Trc_RTV_freeClassRelationshipParentNodes_Entry Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - class: %.*s"
-TraceEvent=Trc_RTV_freeClassRelationshipParentNodes_Parent Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - parent: %.*s"
-TraceExit=Trc_RTV_freeClassRelationshipParentNodes_Exit Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - returning"
+TraceEntry=Trc_RTV_freeClassRelationshipNodes_Entry Overhead=1 Level=3 Template="freeClassRelationshipNodes - class: %.*s"
+TraceEvent=Trc_RTV_freeClassRelationshipNodes_Parent Overhead=1 Level=3 Template="freeClassRelationshipNodes - parent: %.*s"
+TraceExit=Trc_RTV_freeClassRelationshipNodes_Exit Overhead=1 Level=3 Template="freeClassRelationshipNodes - returning"
 
-TraceEntry=Trc_RTV_recordClassRelationshipSnippet_Entry Overhead=1 Level=3 Template="recordClassRelationshipSnippet - sourceClassNameIndex: %x, targetClassNameIndex: %x"
+TraceEntry=Trc_RTV_recordClassRelationshipSnippet_Entry Overhead=1 Level=3 Template="recordClassRelationshipSnippet - childClassNameIndex: %x, parentClassNameIndex: %x"
 TraceException=Trc_RTV_recordClassRelationshipSnippet_EntryAllocationFailed Overhead=1 Level=1 Template="recordClassRelationshipSnippet - failed to allocate snippet entry"
 TraceExit=Trc_RTV_recordClassRelationshipSnippet_Exit Overhead=1 Level=3 Template="recordClassRelationshipSnippet - snippet: %p, error code: %x"
 
 TraceEntry=Trc_RTV_processClassRelationshipSnippets_Entry Overhead=1 Level=3 Template="processClassRelationshipSnippets - romClass: %.*s"
 TraceEvent=Trc_RTV_processClassRelationshipSnippets_NoCachedData Overhead=1 Level=3 Template="processClassRelationshipSnippets - processing snippets from local hash table"
 TraceEvent=Trc_RTV_processClassRelationshipSnippets_UsingCachedData Overhead=1 Level=3 Template="processClassRelationshipSnippets - processing snippets from cached data descriptor"
-TraceException=Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing Overhead=1 Level=1 Template="processClassRelationshipSnippets - error occurred while processing sourceClass: %.*s, targetClass: %.*s"
+TraceException=Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing Overhead=1 Level=1 Template="processClassRelationshipSnippets - error occurred while processing childClass: %.*s, parentClass: %.*s"
 TraceExit=Trc_RTV_processClassRelationshipSnippets_Exit Overhead=1 Level=3 Template="processClassRelationshipSnippets - returning error code: %x"
 
 TraceException=Trc_RTV_generateClassRelationshipSnippetsKey_GenerateKeyFailed Overhead=1 Level=1 Template="generateClassRelationshipSnippetsKey - failed to generate key for romClass: %.*s"
@@ -237,7 +237,7 @@ TraceEvent=Trc_RTV_storeToDataBuffer_Hashtable Overhead=1 Level=3 Template="stor
 TraceEvent=Trc_RTV_storeToDataBuffer_Array Overhead=1 Level=3 Template="storeToDataBuffer - using array to map snippet indices to class names"
 TraceException=Trc_RTV_storeToDataBuffer_HashtableAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate hash table"
 TraceException=Trc_RTV_storeToDataBuffer_ArrayAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate array"
-TraceEvent=Trc_RTV_storeToDataBuffer_StoredSnippet Overhead=1 Level=3 Template="storeToDataBuffer - stored snippet for source: %.*s, target: %.*s"
+TraceEvent=Trc_RTV_storeToDataBuffer_StoredSnippet Overhead=1 Level=3 Template="storeToDataBuffer - stored snippet for child: %.*s, parent: %.*s"
 TraceException=Trc_RTV_storeToDataBuffer_getUTF8AddressFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to get UTF8 address for class at index %d in classNameList"
 
 TraceEntry=Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Entry Overhead=1 Level=3 Template="fetchClassRelationshipSnippetsFromSharedCache - romClass: %.*s"

@@ -211,13 +211,13 @@ unlinkClassLoadingConstraints (J9JavaVM* jvm);
  * @brief Record a class relationship snippet and save it locally in verifyData->classRelationshipSnippetsHashTable.
  *
  * @param *verifyData Bytecode verification data where the classRelationshipSnippetTable is stored
- * @param sourceClassIndex The index of the source class name in verifyData->classNameList
- * @param targetClassIndex The index of the target class name in verifyData->classNameList
+ * @param childClassNameIndex The index of the child class name in verifyData->classNameList
+ * @param parentClassNameIndex The index of the parent class name in verifyData->classNameList
  * @param *reasonCode Set to BCV_ERR_INSUFFICIENT_MEMORY if a snippet entry cannot be allocated, otherwise 0
  * @return IDATA Returns TRUE if recording the snippet is successful, FALSE otherwise
  */
 IDATA
-j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDATA childClassIndex, UDATA parentClassIndex, IDATA *reasonCode);
+j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDATA childClassNameIndex, UDATA parentClassNameIndex, IDATA *reasonCode);
 
 /**
  * @brief Process class relationship snippets for a ROM class.
@@ -230,18 +230,18 @@ IDATA
 j9bcv_processClassRelationshipSnippets(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor);
 
 /**
- * @brief Store class relationship snippets for a romClass to the Shared Classes Cache.
+ * @brief Store class relationship snippets for a ROM class to the Shared Classes Cache.
  *
  * @param *verifyData Bytecode verification data where the classRelationshipSnippetTable is stored
- * @return IDATA Returns BCV_SUCCESS on success, BCV_ERR_INSUFFICIENT_MEMORY on OOM
+ * @return IDATA Returns BCV_SUCCESS on success, BCV_ERR_INSUFFICIENT_MEMORY on OOM, BCV_ERR_INTERNAL_ERROR on error
  */
 IDATA
 j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *verifyData);
 
 /**
- * @brief Fetch class relationship snippets for a romClass from the Shared Classes Cache.
+ * @brief Fetch class relationship snippets for a ROM class from the Shared Classes Cache.
  *
- * @param *verifyData Bytecode verification data for the romClass
+ * @param *verifyData Bytecode verification data for the ROM class
  * @param *snippetsDataDescriptor Pointer to the descriptor where the snippet data will be stored to
  * @param *snippetTableAllocationResult Default BCV_SUCCESS, BCV_ERR_INSUFFICIENT_MEMORY on OOM
  * @return BOOLEAN Returns TRUE if snippets are found in the cache, FALSE otherwise
@@ -260,28 +260,28 @@ j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *
  *
  * @param *vmThread The calling vmThread
  * @param *classLoader Class loader to record the relationship to
- * @param *childName Class name of the child (source class) to record
- * @param childNameLength Length of the child class name
- * @param *parentName Class name of the parent (target class, i.e. superclass or interface) to record
- * @param parentNameLength Length of the parent class name
+ * @param *childClassName Class name of the child (source class) to record
+ * @param childClassNameLength Length of the child class name
+ * @param *parentClassName Class name of the parent (target class, i.e. superclass or interface) to record
+ * @param parentClassNameLength Length of the parent class name
  * @param *reasonCode Set to BCV_ERR_INSUFFICIENT_MEMORY if a child entry or parent node cannot be allocated, otherwise 0
  * @return IDATA Returns TRUE if successful and FALSE if an out of memory error occurs
  */
 IDATA
-j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, U_8 *parentName, UDATA parentNameLength, IDATA *reasonCode);
+j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childClassName, UDATA childClassNameLength, U_8 *parentClassName, UDATA parentClassNameLength, IDATA *reasonCode);
 
 /**
  * @brief Validate each recorded relationship for a class (child).
  *
  * @param *vmThread The calling vmThread
  * @param *classLoader Class loader to look up relationships from
- * @param *childName Class name of the child class to validate
- * @param childNameLength Length of the child class name
+ * @param *childClassName Class name of the child class to validate
+ * @param childClassNameLength Length of the child class name
  * @param childClass The loaded child J9Class
  * @return J9Class Returns NULL if successful, or the class that fails validation if unsuccessful
  */
 J9Class *
-j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, J9Class *childClass);
+j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childClassName, UDATA childClassNameLength, J9Class *childClass);
 
 /**
  * @brief Allocates new hash table to store class relationship entries.
