@@ -38,7 +38,7 @@ ifeq (linux_ppc-64_cmprssptrs_le, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=compressed
+		OMR_GC_POINTER_MODE=mixed
 endif
 
 ifeq (linux_ppc-64_cmprssptrs_le_gcc, $(SPEC))
@@ -65,7 +65,7 @@ ifeq (linux_ppc-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=compressed
+		OMR_GC_POINTER_MODE=mixed
 endif
 
 ifeq (linux_ppc-64_le, $(SPEC))
@@ -79,7 +79,7 @@ ifeq (linux_ppc-64_le, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=full
+		OMR_GC_POINTER_MODE=mixed
 endif
 
 ifeq (linux_ppc-64_le_gcc, $(SPEC))
@@ -106,7 +106,7 @@ ifeq (linux_ppc-64, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=full
+		OMR_GC_POINTER_MODE=mixed
 endif
 
 ifeq (linux_ppc, $(SPEC))

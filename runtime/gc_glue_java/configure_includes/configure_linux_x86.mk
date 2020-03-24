@@ -40,7 +40,7 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=compressed
+		OMR_GC_POINTER_MODE=mixed
 endif
 
 ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
@@ -70,7 +70,7 @@ ifeq (linux_x86-64, $(SPEC))
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
-		OMR_GC_POINTER_MODE=full
+		OMR_GC_POINTER_MODE=mixed
 endif
 
 ifeq (linux_x86, $(SPEC))
