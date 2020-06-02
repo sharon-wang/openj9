@@ -1907,14 +1907,34 @@ char * feGetEnv2(const char * s, const void * vm)
 
    char * envSpace = NULL;
    PORT_ACCESS_FROM_PORT(((J9JavaVM *)vm)->portLibrary);
+#if defined(OSX)
+   J9ThreadMonitor * getEnvMonitor = NULL;
+   int32_t initMonitorResult = j9thread_monitor_init_with_name((J9ThreadMonitor**)&getEnvMonitor, 0, "getenv Monitor");
+   if (0 != initMonitorResult)
+      {
+      TR_ASSERT(false, "j9thread_monitor_init_with_name failed for getenv Monitor with: %i\n", initMonitorResult);
+      }
+   else
+      {
+      j9thread_monitor_enter(getEnvMonitor);
+#endif /* defined(OSX) */
    int32_t envSize = j9sysinfo_get_env((char *)s, NULL, 0);
+#if defined(OSX)
+      j9thread_monitor_exit(getEnvMonitor);
+#endif /* defined(OSX) */
    if (envSize != -1)
       {
       envSpace = (char *)j9mem_allocate_memory(envSize, J9MEM_CATEGORY_JIT);
 
       if (NULL != envSpace)
          {
+#if defined(OSX)
+         j9thread_monitor_enter(getEnvMonitor);
+#endif /* defined(OSX) */
          envSize = j9sysinfo_get_env((char *)s, envSpace, envSize);
+#if defined(OSX)
+         j9thread_monitor_exit(getEnvMonitor);
+#endif /* defined(OSX) */
          if (envSize != 0)
             {
             // failed to read the env: either mis-sized buffer or no env set
@@ -1923,7 +1943,13 @@ char * feGetEnv2(const char * s, const void * vm)
             }
           else
             {
+#if defined(OSX)
+            j9thread_monitor_enter(getEnvMonitor);
+#endif /* defined(OSX) */
             int32_t res = j9sysinfo_get_env("TR_silentEnv", NULL, 0);
+#if defined(OSX)
+            j9thread_monitor_exit(getEnvMonitor);
+#endif /* defined(OSX) */
             // If TR_silentEnv is not found the result is -1. Setting TR_silentEnv prevents printing envVars
             bool verboseQuery = (res == -1 ? true : false);
 
@@ -1934,6 +1960,10 @@ char * feGetEnv2(const char * s, const void * vm)
             }
          }
       }
+#if defined(OSX)
+      }
+      j9thread_monitor_destroy(getEnvMonitor);
+#endif /* defined(OSX) */
    return envSpace;
    }
 
