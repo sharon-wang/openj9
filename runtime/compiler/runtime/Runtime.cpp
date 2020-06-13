@@ -1905,22 +1905,16 @@ char * feGetEnv2(const char * s, const void * vm)
    if (TR::Options::_doNotProcessEnvVars)
       return 0;
 
+   J9JavaVM * javaVM = (J9JavaVM *) vm;
    char * envSpace = NULL;
-   PORT_ACCESS_FROM_PORT(((J9JavaVM *)vm)->portLibrary);
+   PORT_ACCESS_FROM_PORT(javaVM->portLibrary);
+
 #if defined(OSX)
-   J9ThreadMonitor * getEnvMonitor = NULL;
-   int32_t initMonitorResult = j9thread_monitor_init_with_name((J9ThreadMonitor**)&getEnvMonitor, 0, "getenv Monitor");
-   if (0 != initMonitorResult)
-      {
-      TR_ASSERT(false, "j9thread_monitor_init_with_name failed for getenv Monitor with: %i\n", initMonitorResult);
-      }
-   else
-      {
-      j9thread_monitor_enter(getEnvMonitor);
+   j9thread_monitor_enter(javaVM->getEnvMonitor);
 #endif /* defined(OSX) */
    int32_t envSize = j9sysinfo_get_env((char *)s, NULL, 0);
 #if defined(OSX)
-      j9thread_monitor_exit(getEnvMonitor);
+   j9thread_monitor_exit(javaVM->getEnvMonitor);
 #endif /* defined(OSX) */
    if (envSize != -1)
       {
@@ -1929,11 +1923,11 @@ char * feGetEnv2(const char * s, const void * vm)
       if (NULL != envSpace)
          {
 #if defined(OSX)
-         j9thread_monitor_enter(getEnvMonitor);
+         j9thread_monitor_enter(javaVM->getEnvMonitor);
 #endif /* defined(OSX) */
          envSize = j9sysinfo_get_env((char *)s, envSpace, envSize);
 #if defined(OSX)
-         j9thread_monitor_exit(getEnvMonitor);
+         j9thread_monitor_exit(javaVM->getEnvMonitor);
 #endif /* defined(OSX) */
          if (envSize != 0)
             {
@@ -1944,11 +1938,11 @@ char * feGetEnv2(const char * s, const void * vm)
           else
             {
 #if defined(OSX)
-            j9thread_monitor_enter(getEnvMonitor);
+            j9thread_monitor_enter(javaVM->getEnvMonitor);
 #endif /* defined(OSX) */
             int32_t res = j9sysinfo_get_env("TR_silentEnv", NULL, 0);
 #if defined(OSX)
-            j9thread_monitor_exit(getEnvMonitor);
+            j9thread_monitor_exit(javaVM->getEnvMonitor);
 #endif /* defined(OSX) */
             // If TR_silentEnv is not found the result is -1. Setting TR_silentEnv prevents printing envVars
             bool verboseQuery = (res == -1 ? true : false);
@@ -1960,10 +1954,6 @@ char * feGetEnv2(const char * s, const void * vm)
             }
          }
       }
-#if defined(OSX)
-      }
-      j9thread_monitor_destroy(getEnvMonitor);
-#endif /* defined(OSX) */
    return envSpace;
    }
 

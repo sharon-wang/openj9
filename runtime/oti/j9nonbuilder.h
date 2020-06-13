@@ -5225,6 +5225,9 @@ typedef struct J9JavaVM {
 	U_32 minimumReservedRatio;
 	U_32 cancelAbsoluteThreshold;
 	U_32 minimumLearningRatio;
+#if defined(OSX)
+	omrthread_monitor_t getEnvMonitor;
+#endif /* defined(OSX) */
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2
