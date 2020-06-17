@@ -80,10 +80,6 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 
 		omrthread_monitor_init_with_name(&vm->constantDynamicMutex, 0, "Wait mutex for constantDynamic during resolve") ||
 
-#if defined(OSX)
-		omrthread_monitor_init_with_name(&vm->getEnvMonitor, 0, "JIT getenv monitor") ||
-#endif /* defined(OSX) */
-
 		initializeMonitorTable(vm)
 	)
 	{
@@ -160,10 +156,6 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->nativeLibraryMonitor) omrthread_monitor_destroy(vm->nativeLibraryMonitor);
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 	if (vm->constantDynamicMutex) omrthread_monitor_destroy(vm->constantDynamicMutex);
-
-#if defined(OSX)
-	if (vm->getEnvMonitor) omrthread_monitor_destroy(vm->getEnvMonitor);
-#endif /* defined(OSX) */
 
 	destroyMonitorTable(vm);
 }

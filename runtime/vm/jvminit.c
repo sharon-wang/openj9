@@ -579,6 +579,10 @@ void OMRNORETURN exitJavaVM(J9VMThread * vmThread, IDATA rc)
 		omrthread_monitor_enter(vm->classLoaderBlocksMutex);
 #endif
 
+#if defined(OSX)
+		if (vm->getEnvMonitor) omrthread_monitor_destroy(vm->getEnvMonitor);
+#endif /* defined(OSX) */
+
 #if defined(COUNT_BYTECODE_PAIRS)
 		printBytecodePairs(vm);
 #endif /* COUNT_BYTECODE_PAIRS */
@@ -6252,6 +6256,10 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != (stageRC = runInitializationStage(vm, TRACE_ENGINE_INITIALIZED))) {
 		goto error;
 	}
+
+#if defined(OSX)
+	omrthread_monitor_init_with_name(&vm->getEnvMonitor, 0, "JIT OSX getenv monitor");
+#endif /* defined(OSX) */
 
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JIT_INITIALIZED))) {
 		goto error;
