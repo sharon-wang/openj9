@@ -5896,6 +5896,10 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	struct sigaction newSignalAction;
 #endif
 
+#if defined(OSX)
+	omrthread_monitor_init_with_name(&vm->getEnvMonitor, 0, "JIT OSX getenv monitor");
+#endif /* defined(OSX) */
+
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	/* check processor support for cache writeback */
@@ -6256,10 +6260,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != (stageRC = runInitializationStage(vm, TRACE_ENGINE_INITIALIZED))) {
 		goto error;
 	}
-
-#if defined(OSX)
-	omrthread_monitor_init_with_name(&vm->getEnvMonitor, 0, "JIT OSX getenv monitor");
-#endif /* defined(OSX) */
 
 	if (JNI_OK != (stageRC = runInitializationStage(vm, JIT_INITIALIZED))) {
 		goto error;
