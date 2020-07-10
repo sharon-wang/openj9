@@ -77,9 +77,9 @@ public class J9ROMClassHelper {
 		return romclass.extraModifiers().allBitsIn(J9AccClassUnsafe);
 	}
 
-	public static boolean hasVerifyData(J9ROMClassPointer romclass) throws CorruptDataException {
-		return romclass.extraModifiers().allBitsIn(J9AccClassHasVerifyData);
-	}
+	// public static boolean hasVerifyData(J9ROMClassPointer romclass) throws CorruptDataException {
+	// 	return romclass.extraModifiers().allBitsIn(J9AccClassHasVerifyData);
+	// }
 
 	public static boolean hasModifiedByteCodes(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.extraModifiers().allBitsIn(J9AccClassBytecodesModified);

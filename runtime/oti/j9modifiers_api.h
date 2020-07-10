@@ -53,7 +53,7 @@
 #define J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassInternalPrimitiveType)
 #define J9ROMCLASS_IS_INTERMEDIATE_DATA_A_CLASSFILE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIntermediateDataIsClassfile)
 #define J9ROMCLASS_IS_UNSAFE(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassUnsafe)
-#define J9ROMCLASS_HAS_VERIFY_DATA(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasVerifyData)
+// #define J9ROMCLASS_HAS_VERIFY_DATA(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasVerifyData)
 #define J9ROMCLASS_HAS_MODIFIED_BYTECODES(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassBytecodesModified)
 #define J9ROMCLASS_HAS_EMPTY_FINALIZE(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasEmptyFinalize)
 #define J9ROMCLASS_HAS_FINAL_FIELDS(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassHasFinalFields)

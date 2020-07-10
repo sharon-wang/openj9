@@ -1154,20 +1154,20 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		}
 	}
 
-	if ( classFileOracle->getMajorVersion() >= (BCT_Java6MajorVersionShifted >> BCT_MajorClassFileVersionMaskShift) ) {
-		/* Expect verify data for Java 6 and later versions */
-		modifiers |= J9AccClassHasVerifyData;
-	} else {
-		/* Detect if there is verify data for at least one method for versions less than Java 6 */
-		for (ClassFileOracle::MethodIterator methodIterator = classFileOracle->getMethodIterator();
-				methodIterator.isNotDone();
-				methodIterator.next()) {
-			if ( methodIterator.hasStackMap() ) {
-				modifiers |= J9AccClassHasVerifyData;
-				break;
-			}
-		}
-	}
+	// if ( classFileOracle->getMajorVersion() >= (BCT_Java6MajorVersionShifted >> BCT_MajorClassFileVersionMaskShift) ) {
+	// 	/* Expect verify data for Java 6 and later versions */
+	// 	modifiers |= J9AccClassHasVerifyData;
+	// } else {
+	// 	/* Detect if there is verify data for at least one method for versions less than Java 6 */
+	// 	for (ClassFileOracle::MethodIterator methodIterator = classFileOracle->getMethodIterator();
+	// 			methodIterator.isNotDone();
+	// 			methodIterator.next()) {
+	// 		if ( methodIterator.hasStackMap() ) {
+	// 			modifiers |= J9AccClassHasVerifyData;
+	// 			break;
+	// 		}
+	// 	}
+	// }
 
 	if ( classFileOracle->isSynthetic() ) {
 		/* handle the synthetic attribute. In java 1.5 synthetic may be specified in the access flags as well so do not unset bit here */

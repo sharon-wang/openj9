@@ -51,7 +51,8 @@
 #define J9AccClassHasFinalFields 0x2000000
 #define J9AccClassHasJDBCNatives 0x400000
 #define J9AccClassHasNonStaticNonAbstractMethods 0x8000000
-#define J9AccClassHasVerifyData 0x800000
+#define J9AccClass_UNUSED_1 0x800000
+// #define J9AccClassHasVerifyData 0x800000
 #define J9AccClassHotSwappedOut 0x4000000
 #define J9AccClassInnerClass 0x4000
 #define J9AccClassNeedsStaticConstantInit 0x10000

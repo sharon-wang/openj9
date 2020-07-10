@@ -2376,7 +2376,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	UDATA argCount;
 	UDATA length;
 	UDATA mapLength;
-	BOOLEAN hasStackMaps = (J9ROMCLASS_HAS_VERIFY_DATA(romClass) != 0);
+	// BOOLEAN hasStackMaps = (J9ROMCLASS_HAS_VERIFY_DATA(romClass) != 0);
 	UDATA oldState;
 	IDATA result = 0;
 	UDATA rootQueueSize;
@@ -2387,11 +2387,12 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	UDATA stackMapsSize;
 	UDATA *stackTop;
 	BOOLEAN classVersionRequiresStackmaps = romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS;
-	BOOLEAN newFormat = (classVersionRequiresStackmaps || hasStackMaps);
+	// BOOLEAN newFormat = classVersionRequiresStackmaps;
+	// BOOLEAN newFormat = (classVersionRequiresStackmaps || hasStackMaps);
 	BOOLEAN verboseVerification = (J9_VERIFY_VERBOSE_VERIFICATION == (verifyData->verificationFlags & J9_VERIFY_VERBOSE_VERIFICATION));
 
 	PORT_ACCESS_FROM_PORT(portLib);
-	
+
 	Trc_BCV_j9bcv_verifyBytecodes_Entry(verifyData->vmStruct,
 									(UDATA) J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass))),
 									J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)));
@@ -2402,7 +2403,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 
 	verifyData->romClass = romClass;
 	verifyData->errorPC = 0;
-	
+
 	verifyData->romClassInSharedClasses = j9shr_Query_IsAddressInCache(verifyData->javaVM, romClass, romClass->romSize);
 
 	/* List is used for the whole class */
@@ -2412,14 +2413,16 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	romMethod = (J9ROMMethod *) J9ROMCLASS_ROMMETHODS(romClass);
 
 	if (verboseVerification) {
-		ALWAYS_TRIGGER_J9HOOK_VM_CLASS_VERIFICATION_START(verifyData->javaVM->hookInterface, verifyData, newFormat);
+		BOOLEAN classVersionRequiresStackmaps = romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS;
+		ALWAYS_TRIGGER_J9HOOK_VM_CLASS_VERIFICATION_START(verifyData->javaVM->hookInterface, verifyData, classVersionRequiresStackmaps);
+		// ALWAYS_TRIGGER_J9HOOK_VM_CLASS_VERIFICATION_START(verifyData->javaVM->hookInterface, verifyData, newFormat);
 	}
 
 	/* For each method in the class */
 	for (i = 0; i < (UDATA) romClass->romMethodCount; i++) {
-
+		BOOLEAN hasStackMaps = FALSE:
 		UDATA createStackMaps;
-		
+
 		verifyData->ignoreStackMaps = (verifyData->verificationFlags & J9_VERIFY_IGNORE_STACK_MAPS) != 0;
 		verifyData->createdStackMap = FALSE;
 		verifyData->romMethod = romMethod;
@@ -2437,6 +2440,10 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 		if (!((romMethod->modifiers & J9AccNative) || (romMethod->modifiers & J9AccAbstract))) {
 			BOOLEAN isInitMethod = FALSE;
 
+			/* Returns valid StackMap for the method if it exists, NULL otherwise */
+			U_32 *stackMapMethod = getStackMapInfoForROMMethod(romMethod);
+			hasStackMaps = (NULL != stackMapMethod);
+
 			/* BCV_TARGET_STACK_HEADER_UDATA_SIZE for pc/stackBase/stackEnd in J9BranchTargetStack and
 			 * BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE for late overflow detection of longs/doubles
 			 */
@@ -2445,32 +2452,32 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 									+ J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod)
 									+ BCV_TARGET_STACK_HEADER_UDATA_SIZE
 									+ BCV_STACK_OVERFLOW_BUFFER_UDATA_SIZE) * sizeof(UDATA);
-						
+
 			ALLOC_BUFFER(verifyData->liveStack, verifyData->stackSize);
 
 			length = (UDATA) (J9_BYTECODE_SIZE_FROM_ROM_METHOD(romMethod));
 			mapLength = length * sizeof(U_32);
-			
+
 			ALLOC_BUFFER(verifyData->bytecodeMap, mapLength);
 			bytecodeMap = verifyData->bytecodeMap;
-			
+
 _fallBack:
 			memset(bytecodeMap, 0, mapLength);
-							
-			createStackMaps = !classVersionRequiresStackmaps && (verifyData->ignoreStackMaps || !hasStackMaps);
+
+			createStackMaps = (FALSE == hasStackMaps) || verifyData->ignoreStackMaps;
+			// create stack maps if the class version doesn't require them and if stack maps are being ignored or if there aren't any stackmaps
+			// createStackMaps = !classVersionRequiresStackmaps && (verifyData->ignoreStackMaps || !hasStackMaps);
 
 			if (createStackMaps) {
-				verifyData->stackMapsCount = buildBranchMap(verifyData);
-				
-				if (verifyData->stackMapsCount == (UDATA)BCV_ERR_INTERNAL_ERROR) {
+				verifyData->stackMapsCount = buildBranchMap(verifyData); // buildBranchMap returns IDATA
+
+				if (verifyData->stackMapsCount == (UDATA)BCV_ERR_INTERNAL_ERROR) { // why is this casted to UDATA?
 					BUILD_VERIFY_ERROR(J9NLS_BCV_ERR_BYTECODES_INVALID__MODULE, J9NLS_BCV_ERR_BYTECODES_INVALID__ID);
 					result = BCV_ERR_INTERNAL_ERROR;
 					break;
 				}
 			} else {
-				
-				U_32 *stackMapMethod = getStackMapInfoForROMMethod(romMethod);
-
+				// U_32 *stackMapMethod = getStackMapInfoForROMMethod(romMethod);
 				verifyData->stackMapsCount = 0;
 				stackMapData = 0;
 
@@ -2480,16 +2487,17 @@ _fallBack:
 					NEXT_U16(verifyData->stackMapsCount, stackMapData);
 				}
 			}
-		
+
 			stackMapsSize = (verifyData->stackSize) * (verifyData->stackMapsCount);
-	
+
 			ALLOC_BUFFER(verifyData->stackMaps, stackMapsSize);
-		
+
 			if (createStackMaps && verifyData->stackMapsCount) {
 				UDATA mapIndex = 0;
 				/* Non-empty internal stackMap created */
 				verifyData->createdStackMap = TRUE;
-	
+				hasStackMaps = TRUE;
+
 				liveStack = BCV_FIRST_STACK ();
 				/* Initialize stackMaps */
 				for (j = 0; j < length; j++) {
@@ -2502,7 +2510,7 @@ _fallBack:
 						mapIndex++;
 					}
 				}
-	
+
 				rootQueueSize = (verifyData->stackMapsCount + 1) * sizeof(UDATA);
 
 				if (rootQueueSize > verifyData->rootQueueSize) {
@@ -2520,12 +2528,12 @@ _fallBack:
 
 			liveStack = (J9BranchTargetStack *) verifyData->liveStack;
 			stackTop = &(liveStack->stackElements[0]);
-	
+
 			isInitMethod = buildStackFromMethodSignature(verifyData, &stackTop, &argCount);
-	
+
 			SAVE_STACKTOP(liveStack, stackTop);
 			liveStack->stackBaseIndex = liveStack->stackTopIndex;
-		
+
 			result = 0;
 			if (verifyData->stackMapsCount) {
 				if (createStackMaps) {
@@ -2534,7 +2542,7 @@ _fallBack:
 					result = decompressStackMaps (verifyData, argCount, stackMapData);
 				}
 			}
-			
+
 			if (BCV_ERR_INSUFFICIENT_MEMORY == result) {
 				goto _done;
 			}
@@ -2547,7 +2555,7 @@ _fallBack:
 					setInitializedThisStatus(verifyData);
 				}
 
-				if (newFormat && verboseVerification) {
+				if (hasStackMaps && verboseVerification) {
 					ALWAYS_TRIGGER_J9HOOK_VM_METHOD_VERIFICATION_START(verifyData->javaVM->hookInterface, verifyData);
 				}
 
@@ -2557,12 +2565,17 @@ _fallBack:
 					goto _done;
 				}
 
-				if (newFormat && verboseVerification) {
+				if (hasStackMaps && verboseVerification) {
 					BOOLEAN willFailOver = FALSE;
 					/*
 					 * If verification failed and will fail over to older verifier, we only output stack map frame details
 					 * if the frame count is bigger than 0.
 					 */
+					// if bytecode verifcation for the method failed, and
+					// the class version doesn't require stack maps, and
+					// stack maps were not created, and
+					// fallback verification is not disabled
+					// so the method had stack maps and is pre-java 7, but the stack maps were invalid
 					if ((BCV_SUCCESS != result)
 						&& !classVersionRequiresStackmaps
 						&& !createStackMaps
@@ -2587,7 +2600,7 @@ _fallBack:
 					RESET_VERIFY_ERROR(verifyData);
 					verifyData->errorPC = (UDATA) 0;
 					verifyData->errorModule = 0;
-					verifyData->errorCode = 0;				
+					verifyData->errorCode = 0;
 
 					Trc_BCV_j9bcv_verifyBytecodes_ReverifyMethod(verifyData->vmStruct,
 							(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)),
@@ -2601,22 +2614,22 @@ _fallBack:
 					verifyData->ignoreStackMaps = TRUE;
 
 					if (verboseVerification) {
-						newFormat = FALSE;
-						ALWAYS_TRIGGER_J9HOOK_VM_CLASS_VERIFICATION_FALLBACK(verifyData->javaVM->hookInterface, verifyData, newFormat);
+						hasStackMaps = FALSE;
+						ALWAYS_TRIGGER_J9HOOK_VM_CLASS_VERIFICATION_FALLBACK(verifyData->javaVM->hookInterface, verifyData, hasStackMaps);
 					}
 
 					goto _fallBack;
 				}
 			}
 		}
-		
+
 		romMethod = J9_NEXT_ROM_METHOD(romMethod);
 	}
 
 _done:
 	verifyData->vmStruct->omrVMThread->vmState = oldState;
 	if (result == BCV_ERR_INSUFFICIENT_MEMORY) {
-		Trc_BCV_j9bcv_verifyBytecodes_OutOfMemory(verifyData->vmStruct, 
+		Trc_BCV_j9bcv_verifyBytecodes_OutOfMemory(verifyData->vmStruct,
 				(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 				J9UTF8_DATA(J9ROMCLASS_CLASSNAME(verifyData->romClass)),
 				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)),

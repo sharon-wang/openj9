@@ -1231,7 +1231,8 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		</description>
 		<struct>J9VMClassVerificationStartEvent</struct>
 		<data type="struct J9BytecodeVerificationData*" name="verifyData" description="verification context" />
-		<data type="BOOLEAN" name="newFormat" description="verification with new format(stack map frame)" />
+		<data type="BOOLEAN" name="classVersionRequiresStackmaps" description="verification of class with version requiring stack map frames" />
+		<!-- <data type="BOOLEAN" name="newFormat" description="verification with new format(stack map frame)" /> -->
 	</event>
 
 	<event>

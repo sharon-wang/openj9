@@ -2324,7 +2324,7 @@ _newStack:
 
 				/* Is the next stack for the next bytecode */
 				if (pc != (UDATA) nextStackPC) {
-					if (J9ROMCLASS_HAS_VERIFY_DATA(romClass) && (!verifyData->ignoreStackMaps)) {
+					if (J9ROMMETHOD_HAS_STACK_MAP(romMethod) && (!verifyData->ignoreStackMaps)) {
 						/* the nextStack is not the wanted stack */
 						/* Flow verification allows dead code without a map */
 						/* Jazz 82615: Set the error code, the next pc value, and the pc value of unexpected stackmap frame. */
@@ -2352,7 +2352,7 @@ _newStack:
 				currentMapData = nextStack (verifyData, &nextMapIndex, &nextStackPC);
 			} else {
 				/* no map available */
-				if (J9ROMCLASS_HAS_VERIFY_DATA(romClass) && (!verifyData->ignoreStackMaps)) {
+				if (J9ROMMETHOD_HAS_STACK_MAP(romMethod) && (!verifyData->ignoreStackMaps)) {
 					/* Flow verification allows dead code without a map */
 					/* Jazz 82615: Set the error code when nextStackPC goes beyond the stackmap table. */
 					errorType = J9NLS_BCV_ERR_INCONSISTENT_STACK__ID;

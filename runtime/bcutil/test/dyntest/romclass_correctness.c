@@ -50,7 +50,7 @@ typedef struct RCCorrectnessConfig {
 #define TEST_J9AccClassReferencePhantom ((UDATA)0x00000010)
 #define TEST_J9AccClassHasEmptyFinalize ((UDATA)0x00000020)
 #define TEST_J9AccClassFinalizeNeeded   ((UDATA)0x00000040)
-#define TEST_J9AccClassHasVerifyData    ((UDATA)0x00000080)
+// #define TEST_J9AccClassHasVerifyData    ((UDATA)0x00000080)
 #define TEST_J9AccClassUnsafe           ((UDATA)0x00000100)
 /* method flags */
 #define TEST_J9AccMethodHasBackwardBranches    ((UDATA)0x00000200)
@@ -103,11 +103,11 @@ verifyClassFlags(J9PortLibrary *portLib, const char *testName, J9ROMClass *romCl
 			outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s does not have J9AccClassFinalizeNeeded set\n", testData->classFileName );
 		}
 	}
-	if ( TEST_J9AccClassHasVerifyData & testData->testFlagON ) {
-		if (0 == J9ROMCLASS_HAS_VERIFY_DATA(romClass)) {
-			outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s does not have J9AccClassHasVerifyData set\n", testData->classFileName );
-		}
-	}
+	// if ( TEST_J9AccClassHasVerifyData & testData->testFlagON ) {
+	// 	if (0 == J9ROMCLASS_HAS_VERIFY_DATA(romClass)) {
+	// 		outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s does not have J9AccClassHasVerifyData set\n", testData->classFileName );
+	// 	}
+	// }
 	if ( TEST_J9AccClassUnsafe & testData->testFlagON ) {
 		if (0 == J9ROMCLASS_IS_UNSAFE(romClass)) {
 			outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s does not have J9AccClassUnsafe set\n", testData->classFileName );
@@ -154,11 +154,11 @@ verifyClassFlags(J9PortLibrary *portLib, const char *testName, J9ROMClass *romCl
 			outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s has J9AccClassFinalizeNeeded set\n", testData->classFileName );
 		}
 	}
-	if ( TEST_J9AccClassHasVerifyData & testData->testFlagOFF ) {
-		if (0 != J9ROMCLASS_HAS_VERIFY_DATA(romClass)) {
-			outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s has J9AccClassHasVerifyData set\n", testData->classFileName );
-		}
-	}
+	// if ( TEST_J9AccClassHasVerifyData & testData->testFlagOFF ) {
+	// 	if (0 != J9ROMCLASS_HAS_VERIFY_DATA(romClass)) {
+	// 		outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s has J9AccClassHasVerifyData set\n", testData->classFileName );
+	// 	}
+	// }
 	if ( TEST_J9AccClassUnsafe & testData->testFlagOFF ) {
 		if (0 != J9ROMCLASS_IS_UNSAFE(romClass)) {
 			outputErrorMessage(TEST_ERROR_ARGS, "ROMClass for class: %s has J9AccClassUnsafe set\n", testData->classFileName );
@@ -233,7 +233,7 @@ _exit_test:
 RCCorrectnessConfig test1 = {
 		"VM.class",
 
-		TEST_J9AccClassHasVerifyData,
+		// TEST_J9AccClassHasVerifyData,
 
 		TEST_J9AccClassHasFinalFields |
 		TEST_J9AccClassCloneable |
@@ -255,8 +255,9 @@ RCCorrectnessConfig test2 = {
 
 		TEST_J9AccClassReferenceSoft |
 		TEST_J9AccClassReferencePhantom |
-		TEST_J9AccClassReferenceWeak |
-		TEST_J9AccClassHasVerifyData,
+		TEST_J9AccClassReferenceWeak,
+		//  |
+		// TEST_J9AccClassHasVerifyData,
 
 		TEST_J9AccClassHasFinalFields |
 		TEST_J9AccClassCloneable |
@@ -273,8 +274,9 @@ RCCorrectnessConfig test2 = {
 RCCorrectnessConfig test3 = {
 		"AbstractClassLoader$3.class",
 
-		TEST_J9AccClassHasFinalFields |
-		TEST_J9AccClassHasVerifyData,
+		TEST_J9AccClassHasFinalFields,
+		//  |
+		// TEST_J9AccClassHasVerifyData,
 
 		TEST_J9AccClassReferencePhantom |
 		TEST_J9AccClassReferenceWeak |
@@ -292,7 +294,7 @@ RCCorrectnessConfig test3 = {
 RCCorrectnessConfig test4 = {
 		"AttachHandler$1.class",
 
-		TEST_J9AccClassHasVerifyData |
+		// TEST_J9AccClassHasVerifyData |
 		TEST_J9AccSynthetic ,
 
 		TEST_J9AccClassHasFinalFields |
@@ -312,8 +314,9 @@ RCCorrectnessConfig test4 = {
 RCCorrectnessConfig test5 = {
 		"ZipEntry.class",
 
-		TEST_J9AccClassCloneable |
-		TEST_J9AccClassHasVerifyData,
+		TEST_J9AccClassCloneable,
+		//  |
+		// TEST_J9AccClassHasVerifyData,
 
 		TEST_J9AccClassHasFinalFields |
 		TEST_J9AccClassHasEmptyFinalize |
@@ -333,8 +336,9 @@ RCCorrectnessConfig test5 = {
 RCCorrectnessConfig test6 = {
 		"ZipStream.class",
 
-		TEST_J9AccClassFinalizeNeeded   |
-		TEST_J9AccClassHasVerifyData,
+		TEST_J9AccClassFinalizeNeeded,
+		//    |
+		// TEST_J9AccClassHasVerifyData,
 
 		TEST_J9AccClassHasFinalFields |
 		TEST_J9AccClassCloneable |
