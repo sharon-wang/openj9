@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (c) 2006, 2020 IBM Corp. and others
+Copyright (c) 2020, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,8 +21,8 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
-	<xi:include href="objects.xml">
-	<artifact type="static" name="j9gctrc">
+	<xi:include href="../../gc_trace/objects.xml">
+	<artifact type="static" name="j9gctrc_full">
 		<include-if condition="spec.flags.module_gc_trace" />
 		<phase>core quick</phase>
 		<flags>
@@ -32,21 +32,24 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</flags>
 		<includes>
 			<include path="j9include"/>
-			<include path="j9gcbase"/>
+			<include path="j9gcbase_full"/>
 			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
 			<include path="$(OMR_DIR)/gc/base/segregated" type="relativepath"/>
 			<include path="j9gcgluejava"/>
-			<include path="j9gcinclude"/>
+			<include path="j9gcinclude_full"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
-			<include path="j9gcstats"/>
+			<include path="j9gcstats_full"/>
 			<include path="$(OMR_DIR)/gc/stats" type="relativepath"/>
-			<include path="j9gcstructs"/>
+			<include path="j9gcstructs_full"/>
 			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
-			<include path="j9gctrcstandard"/>
-			<include path="j9gctrcvlhgc"/>
-			<include path="j9gcvlhgc"/>
+			<include path="j9gctrcstandard_full"/>
+			<include path="j9gctrcvlhgc_full"/>
+			<include path="j9gcvlhgc_full"/>
 			<include path="j9oti"/>
 		</includes>
+		<vpaths>
+			<vpath pattern="%" path="../../gc_trace" augmentIncludes="true" type="relativepath"/>
+		</vpaths>
 		<objects>
 			<group name="gc_trace"/>
 		</objects>

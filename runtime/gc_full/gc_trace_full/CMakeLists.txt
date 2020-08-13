@@ -20,6 +20,10 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+# **** Temp rough copy of gc_trace cmake, not sure about this ****
+# **** may only need the one existing of CMakeLists with the modifications?? ****
+
+# would need to set the proper path to these
 set(gc_trace_sources
 	Tgc.cpp
 	TgcAllocation.cpp
@@ -42,18 +46,8 @@ set(gc_trace_sources
 	TgcTerse.cpp
 )
 
-j9vm_add_library(j9gctrc STATIC
+j9vm_add_library(j9gctrc_full STATIC
 	${gc_trace_sources}
-)
-
-j9vm_add_library(j9gctrcfull STATIC
-	${gc_trace_sources}
-)
-
-target_include_directories(j9gctrc
-	PRIVATE
-		${j9vm_SOURCE_DIR}/gc_trace_standard
-		${j9vm_SOURCE_DIR}/gc_trace_vlhgc
 )
 
 target_include_directories(j9gctrc_full
@@ -62,19 +56,11 @@ target_include_directories(j9gctrc_full
 		${j9vm_SOURCE_DIR}/gc_full/gc_trace_vlhgc
 )
 
-target_link_libraries(j9gctrc
-	PRIVATE
-		j9vm_interface
-		j9vm_gc_includes
-
-		omrgc
-)
-
 target_link_libraries(j9gctrc_full
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
 
-		omrgc
+		omrgc_full
 )
 

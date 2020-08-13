@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (c) 2020, 2020 IBM Corp. and others
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+<module>
+
+	<exports group="all">
+		<export name="JVM_OnLoad"/>
+		<export name="J9VMDllMain"/>
+	</exports>
+
+	<artifact type="shared" name="j9gc_full" bundle="j9vmall" loadgroup="">
+		<include-if condition="spec.flags.module_gc"/>
+		<options>
+			<option name="isRequired"/>
+			<option name="requiresPrimitiveTable"/>
+			<option name="prototypeHeaderFileNames" data="j9protos.h"/>
+			<option name="isCPlusPlus"/>
+			<option name="dllDescription" data="GC"/>
+		</options>
+		<phase>core quick j2se</phase>
+		<dependencies>
+			<!-- This dependency ensures that the DDR library gets compiled. -->
+			<dependency name="j9gcddr_full">
+				<include-if condition="spec.flags.module_ddr"/>
+				<exclude-if condition="spec.flags.opt_useOmrDdr"/>
+			</dependency>
+		</dependencies>
+		<exports>
+			<group name="all"/>
+		</exports>
+		<flags>
+			<flag name="/w34189" asmflag="false" definition="false">
+				<include-if condition="spec.win_x86[^-]*"/>
+			</flag>
+		</flags>
+		<includes>
+			<!-- *** added _full to gc libs that need to be duplicated - not sure if path to libs needs to be updated somewhere??? *** -->
+			<include path="j9include"/>
+			<include path="j9oti"/>
+			<include path="j9gcbase_full"/>
+			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
+			<include path="j9gcstructs_full"/>
+			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
+			<include path="j9gcstats_full"/>
+			<include path="$(OMR_DIR)/gc/stats" type="relativepath"/>
+			<include path="j9gcinclude_full"/>
+			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
+			<include path="j9modronstartup_full"/>
+			<include path="$(OMR_DIR)/gc/startup" type="relativepath"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
+		<libraries>
+		<!-- *** added _full to gc libs that need to be duplicated - not sure if path to libs needs to be updated somewhere??? *** -->
+			<library name="j9util"/>
+			<library name="j9utilcore"/>
+			<library name="j9avl" type="external"/>
+			<library name="j9hashtable" type="external"/>
+			<library name="j9thr"/>
+			<library name="j9stackmap"/>
+			<library name="j9pool" type="external"/>
+			<library name="j9hookable"/>
+			<library name="j9gcbase_full"/>
+			<library name="omrgcbase" type="external"/>
+			<library name="j9gcstructs_full"/>
+			<library name="omrgcstructs" type="external"/>
+			<library name="j9gcstats_full"/>
+			<library name="omrgcstats" type="external"/>
+			<library name="j9gcapi_full"/>
+			<library name="omrglue" type="external"/>
+			<library name="j9modronstartup_full"/>
+			<library name="omrgcstartup" type="external"/>
+			<library name="j9gctrc_full">
+				<include-if condition="spec.flags.J9VM_GC_MODRON_TRACE"/>
+			</library>
+			<library name="j9gctrcstandard_full">
+				<include-if condition="spec.flags.J9VM_GC_MODRON_TRACE and spec.flags.J9VM_GC_MODRON_STANDARD"/>
+			</library>
+			<library name="j9gctrcvlhgc_full">
+				<include-if condition="spec.flags.J9VM_GC_MODRON_TRACE and spec.flags.J9VM_GC_VLHGC"/>
+			</library>
+			<library name="j9modronstandard_full">
+				<include-if condition="spec.flags.J9VM_GC_MODRON_STANDARD"/>
+			</library>
+			<library name="omrgcstandard" type="external">
+				<include-if condition="spec.flags.J9VM_GC_MODRON_STANDARD"/>
+			</library>
+			<library name="j9realtime_full">
+				<include-if condition="spec.flags.J9VM_GC_REALTIME"/>
+			</library>
+			<library name="winmm.lib" type="system">
+				<include-if condition="spec.flags.J9VM_GC_REALTIME and spec.win_.*"/>
+			</library>
+			<library name="j9gcvlhgc_full">
+				<include-if condition="spec.flags.J9VM_GC_VLHGC"/>
+			</library>
+		</libraries>
+	</artifact>
+
+</module>
