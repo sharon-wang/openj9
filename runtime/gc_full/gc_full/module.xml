@@ -21,7 +21,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
-
+	<xi:include href="../../gc/objects.xml">
 	<exports group="all">
 		<export name="JVM_OnLoad"/>
 		<export name="J9VMDllMain"/>
@@ -67,6 +67,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9modronstartup_full"/>
 			<include path="$(OMR_DIR)/gc/startup" type="relativepath"/>
 		</includes>
+		<vpaths>
+			<vpath pattern="%" path="../../gc" augmentIncludes="true" type="relativepath"/>
+		</vpaths>
+		<objects>
+			<group name="gc"/>
+		</objects>
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>

@@ -21,7 +21,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
-
+	<xi:include href="objects.xml">
 	<exports group="all">
 		<export name="JVM_OnLoad"/>
 		<export name="J9VMDllMain"/>
@@ -114,6 +114,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.flags.J9VM_GC_VLHGC"/>
 			</library>
 		</libraries>
+		<objects>
+			<group name="gc"/>
+		</objects>
 	</artifact>
 
 </module>
