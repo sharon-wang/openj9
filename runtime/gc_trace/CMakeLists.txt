@@ -46,7 +46,7 @@ j9vm_add_library(j9gctrc STATIC
 	${gc_trace_sources}
 )
 
-j9vm_add_library(j9gctrcfull STATIC
+j9vm_add_library(j9gctrc_full STATIC
 	${gc_trace_sources}
 )
 
@@ -75,6 +75,6 @@ target_link_libraries(j9gctrc_full
 		j9vm_interface
 		j9vm_gc_includes
 
-		omrgc
+		omrgcfull
 )
 
