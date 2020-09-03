@@ -20,15 +20,23 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gc SHARED
-	OUTPUT_NAME j9gc${J9VM_VERSION_SUFFIX}
+set(gc_sources
 	dllinit.c
 	gctable.c
+)
 
+j9vm_add_library(j9gc SHARED
+	OUTPUT_NAME j9gc${J9VM_VERSION_SUFFIX}
+	${gc_sources}
+)
+j9vm_add_library(j9gc_full SHARED
+	OUTPUT_NAME j9gc_full${J9VM_VERSION_SUFFIX}
+	${gc_sources}
 )
 
 if(OMR_TOOLCONFIG STREQUAL "msvc")
 	target_compile_options(j9gc PRIVATE /w34189)
+	target_compile_options(j9gc_full PRIVATE /w34189)
 endif()
 
 target_link_libraries(j9gc
@@ -68,21 +76,68 @@ target_link_libraries(j9gc
 
 		j9thr
 )
+target_link_libraries(j9gc_full
+	PRIVATE
+		j9vm_interface
+
+		j9util
+		j9utilcore
+		j9avl
+		j9thr
+		j9stackmap
+		j9pool
+		omrgc_full #LINKING HACK
+		j9hookable
+		j9gcbase_full
+		j9gcstructs_full
+		j9gcstats_full
+		j9gcapi_full
+		j9modronstartup_full
+		j9gctrc_full
+		j9gctrcstandard_full
+		j9gctrcvlhgc_full
+		j9realtime_full
+		j9gcvlhgc_full
+		omrgc_full
+
+		#TODO: this is hack to make linking work.
+		# Need to figure out why we need this in CMake but not UMA
+		j9modronstandard_full
+		j9gcbase_full
+		j9hashtable
+		j9gcbase_full
+		j9modronstandard_full
+		j9realtime_full
+		j9gcvlhgc_full
+		j9gcbase_full
+
+		j9thr
+)
 
 if(OMR_NEED_LIBRT)
 	target_link_libraries(j9gc PRIVATE rt)
+	target_link_libraries(j9gc_full PRIVATE rt)
 endif()
 
 if(OMR_HOST_OS STREQUAL "linux")
 	target_link_libraries(j9gc PRIVATE pthread)
+	target_link_libraries(j9gc_full PRIVATE pthread)
 endif()
 
 target_include_directories(j9gc
 	PUBLIC
 		$<TARGET_PROPERTY:omrgc,INTERFACE_INCLUDE_DIRECTORIES>
 )
+target_include_directories(j9gc_full
+	PUBLIC
+		$<TARGET_PROPERTY:omrgc_full,INTERFACE_INCLUDE_DIRECTORIES>
+)
 
 omr_add_exports(j9gc
+	JVM_OnLoad
+	J9VMDllMain
+)
+omr_add_exports(j9gc_full
 	JVM_OnLoad
 	J9VMDllMain
 )
@@ -91,7 +146,7 @@ target_enable_ddr(j9gc)
 ddr_set_add_targets(j9ddr j9gc)
 
 install(
-	TARGETS j9gc
+	TARGETS j9gc j9gc_full
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

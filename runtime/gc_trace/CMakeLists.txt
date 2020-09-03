@@ -45,7 +45,6 @@ set(gc_trace_sources
 j9vm_add_library(j9gctrc STATIC
 	${gc_trace_sources}
 )
-
 j9vm_add_library(j9gctrc_full STATIC
 	${gc_trace_sources}
 )
@@ -55,11 +54,10 @@ target_include_directories(j9gctrc
 		${j9vm_SOURCE_DIR}/gc_trace_standard
 		${j9vm_SOURCE_DIR}/gc_trace_vlhgc
 )
-
 target_include_directories(j9gctrc_full
 	PRIVATE
-		${j9vm_SOURCE_DIR}/gc_full/gc_trace_standard
-		${j9vm_SOURCE_DIR}/gc_full/gc_trace_vlhgc
+		${j9vm_SOURCE_DIR}/gc_trace_standard
+		${j9vm_SOURCE_DIR}/gc_trace_vlhgc
 )
 
 target_link_libraries(j9gctrc
@@ -69,12 +67,10 @@ target_link_libraries(j9gctrc
 
 		omrgc
 )
-
 target_link_libraries(j9gctrc_full
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
 
-		omrgcfull
+		omrgc_full
 )
-

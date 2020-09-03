@@ -21,31 +21,42 @@
 ################################################################################
 
 j9vm_add_library(j9vm_gc_glue INTERFACE)
+j9vm_add_library(j9vm_gc_glue_full INTERFACE)
+
+set(gc_glue_sources
+	${CMAKE_CURRENT_SOURCE_DIR}/ArrayletObjectModel.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ArrayletObjectModelBase.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CollectorLanguageInterfaceImpl.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CompactDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupObject.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupRoots.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentMarkingDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentSafepointCallbackJava.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/EnvironmentDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/GlobalCollectorDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/JNICriticalRegion.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootClearer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootMarker.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MetronomeDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MixedObjectModel.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ObjectModel.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ObjectModelDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ScavengerBackOutScanner.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ScavengerDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootClearer.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootScanner.cpp
+)
+
 target_sources(j9vm_gc_glue
 	INTERFACE
-		${CMAKE_CURRENT_SOURCE_DIR}/ArrayletObjectModel.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ArrayletObjectModelBase.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/CollectorLanguageInterfaceImpl.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/CompactDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupObject.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupRoots.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentMarkingDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentSafepointCallbackJava.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/EnvironmentDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/GlobalCollectorDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/JNICriticalRegion.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootClearer.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MarkingSchemeRootMarker.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MetronomeDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/MixedObjectModel.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModel.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ObjectModelDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerBackOutScanner.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerDelegate.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootClearer.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/ScavengerRootScanner.cpp
+		${gc_glue_sources}
 )
+target_sources(j9vm_gc_glue_full
+	INTERFACE
+		${gc_glue_sources}
+)
+
 target_link_libraries(j9vm_gc_glue
 	INTERFACE
 		j9vm_interface
@@ -57,6 +68,18 @@ target_link_libraries(j9vm_gc_glue
 		j9gcstats
 		j9util
 )
+target_link_libraries(j9vm_gc_glue_full
+	INTERFACE
+		j9vm_interface
+		j9vm_gc_includes
+
+		j9gcvlhgc_full
+		j9modronstandard_full
+		j9realtime_full
+		j9gcstats_full
+		j9util
+)
+
 target_include_directories(j9vm_gc_glue
 	INTERFACE
 		${j9vm_SOURCE_DIR}/gc_modron_standard
@@ -64,6 +87,14 @@ target_include_directories(j9vm_gc_glue
 		${j9vm_SOURCE_DIR}/gc_trace
 		${j9vm_SOURCE_DIR}/gc_vlhgc
 )
+target_include_directories(j9vm_gc_glue_full
+	INTERFACE
+		${j9vm_SOURCE_DIR}/gc_modron_standard_full
+		${j9vm_SOURCE_DIR}/gc_realtime_full
+		${j9vm_SOURCE_DIR}/gc_trace_full
+		${j9vm_SOURCE_DIR}/gc_vlhgc_full
+)
+
 j9vm_add_library(j9vm_util_glue INTERFACE)
 target_sources(j9vm_util_glue
 	INTERFACE

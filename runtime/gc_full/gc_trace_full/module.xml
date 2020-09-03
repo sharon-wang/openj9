@@ -35,7 +35,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9gcbase_full"/>
 			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
 			<include path="$(OMR_DIR)/gc/base/segregated" type="relativepath"/>
-			<include path="j9gcgluejava"/>
+			<include path="j9gcgluejava_full"/>
 			<include path="j9gcinclude_full"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 			<include path="j9gcstats_full"/>

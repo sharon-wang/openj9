@@ -281,6 +281,19 @@ target_include_directories(j9vm_gc_includes
 		${j9vm_SOURCE_DIR}/gc_structs
 )
 
+j9vm_add_library(j9vm_gc_includes_full INTERFACE)
+target_include_directories(j9vm_gc_includes_full
+	INTERFACE
+		# Pull in the public include paths exposed by the omrgc library
+		$<TARGET_PROPERTY:omrgc_full,INTERFACE_INCLUDE_DIRECTORIES>
+		# And then the include paths for the code we add ontop of the base omrgc
+		${j9vm_SOURCE_DIR}/gc_include
+		${j9vm_SOURCE_DIR}/gc_glue_java_full
+		${j9vm_SOURCE_DIR}/gc_base_full
+		${j9vm_SOURCE_DIR}/gc_stats_full
+		${j9vm_SOURCE_DIR}/gc_structs_full
+)
+
 # Stub library to simplify programs which use makelib/cmain.c to provide a signal protected main
 j9vm_add_library(j9vm_main_wrapper INTERFACE)
 target_sources(j9vm_main_wrapper INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/makelib/cmain.c)
@@ -296,9 +309,9 @@ target_link_libraries(j9vm_main_wrapper
 
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
-set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "")
+set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "") #will need to pick regular or FULL glue???
 set(OMR_RAS_GLUE_TARGET "j9vm_ras_glue" CACHE INTERNAL "")
-set(OMR_CORE_GLUE_TARGET "j9vm_core_glue" CACHE INTERNAL "")
+set(OMR_CORE_GLUE_TARGET "j9vm_core_glue" CACHE INTERNAL "") #will need to pick regular or FULL glue???
 set(OMR_UTIL_GLUE_TARGET "j9vm_util_glue" CACHE INTERNAL "")
 
 # setup OMR library overrides
