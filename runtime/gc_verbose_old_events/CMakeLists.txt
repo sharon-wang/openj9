@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcvrbevents STATIC
+set(gc_verbose_old_events_sources
 	VerboseEvent.cpp
 	VerboseEventAFEnd.cpp
 	VerboseEventClassUnloadingEnd.cpp
@@ -74,13 +74,31 @@ j9vm_add_library(j9gcvrbevents STATIC
 	VerboseEventTarokIncrementStart.cpp
 )
 
+j9vm_add_library(j9gcvrbevents STATIC
+	${gc_verbose_old_events_sources}
+)
+j9vm_add_library(j9gcvrbevents_full STATIC
+	${gc_verbose_old_events_sources}
+)
+
 target_include_directories(j9gcvrbevents
 	PRIVATE
 		${j9vm_SOURCE_DIR}/gc_verbose_old
 )
+target_include_directories(j9gcvrbevents_full
+	PRIVATE
+		${j9vm_SOURCE_DIR}/gc_verbose_old
+)
+
 target_link_libraries(j9gcvrbevents
 	PRIVATE
 		j9vm_interface
 
 		omrgc
+)
+target_link_libraries(j9gcvrbevents_full
+	PRIVATE
+		j9vm_interface
+
+		omrgc_full
 )

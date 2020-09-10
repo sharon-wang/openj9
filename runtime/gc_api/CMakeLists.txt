@@ -45,7 +45,7 @@ target_link_libraries(j9gcapi
 target_link_libraries(j9gcapi_full
 	PRIVATE
 		j9vm_interface
-		j9vm_gc_includes
+		j9vm_gc_includes_full
 
 		omrgc_full
 )

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2014, 2019 IBM Corp. and others
+  Copyright (c) 2014, 2020 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 -->
 
 <module>
+	<xi:include href="objects.xml">
 	<artifact type="static" name="j9gcvrbhdlrstandardjava">
 		<include-if condition="spec.flags.gc_modronStandard" />
 		<phase>core quick</phase>
@@ -47,6 +48,9 @@
 			<include path="j9gcgluejava"/>
 			<include path="$(OMR_DIR)/gc/verbose/handler_standard" type="relativepath"/>
 		</includes>
+		<objects>
+			<group name="gc_verbose_handler_standard_java"/>
+		</objects>
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>

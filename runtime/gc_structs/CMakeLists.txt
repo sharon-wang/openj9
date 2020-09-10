@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcstructs STATIC
+set(gc_structs_sources
 	ArrayletLeafIterator.cpp
 	CallSitesIterator.cpp
 	ClassArrayClassSlotIterator.cpp
@@ -53,10 +53,24 @@ j9vm_add_library(j9gcstructs STATIC
 	VMThreadStackSlotIterator.cpp
 )
 
-target_link_libraries(j9gcstructs 
+j9vm_add_library(j9gcstructs STATIC
+	${gc_structs_sources}
+)
+j9vm_add_library(j9gcstructs_full STATIC
+	${gc_structs_sources}
+)
+
+target_link_libraries(j9gcstructs
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
 
 		omrgc
+)
+target_link_libraries(j9gcstructs_full
+	PRIVATE
+		j9vm_interface
+		j9vm_gc_includes_full
+
+		omrgc_full
 )

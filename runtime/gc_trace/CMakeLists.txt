@@ -70,7 +70,7 @@ target_link_libraries(j9gctrc
 target_link_libraries(j9gctrc_full
 	PRIVATE
 		j9vm_interface
-		j9vm_gc_includes
+		j9vm_gc_includes_full
 
 		omrgc_full
 )

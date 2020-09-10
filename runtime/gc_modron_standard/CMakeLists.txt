@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9modronstandard STATIC
+set(gc_modron_standard_sources
 	ConcurrentSweepGC.cpp
 	OwnableSynchronizerObjectBufferStandard.cpp
 	ReadBarrierVerifier.cpp
@@ -30,6 +30,13 @@ j9vm_add_library(j9modronstandard STATIC
 	UnfinalizedObjectBufferStandard.cpp
 )
 
+j9vm_add_library(j9modronstandard STATIC
+	${gc_modron_standard_sources}
+)
+j9vm_add_library(j9modronstandard_full STATIC
+	${gc_modron_standard_sources}
+)
+
 target_link_libraries(j9modronstandard
 	PRIVATE
 		j9vm_interface
@@ -37,4 +44,12 @@ target_link_libraries(j9modronstandard
 
 		omrgc
 		j9gcbase
+)
+target_link_libraries(j9modronstandard_full
+	PRIVATE
+		j9vm_interface
+		j9vm_gc_includes_full
+
+		omrgc_full
+		j9gcbase_full
 )

@@ -20,12 +20,20 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcvrbjava STATIC
+set(gc_verbose_java_sources
 	VerboseHandlerJava.cpp
 	VerboseJava.cpp
 	VerboseManagerJava.cpp
 	VerboseWriterTrace.cpp
 )
+
+j9vm_add_library(j9gcvrbjava STATIC
+	${gc_verbose_java_sources}
+)
+j9vm_add_library(j9gcvrbjava_full STATIC
+	${gc_verbose_java_sources}
+)
+
 target_include_directories(j9gcvrbjava
 	PRIVATE
 		${j9vm_SOURCE_DIR}/gc_verbose_handler_standard_java
@@ -33,10 +41,25 @@ target_include_directories(j9gcvrbjava
 		${j9vm_SOURCE_DIR}/gc_verbose_handler_vlhgc
 		${j9vm_SOURCE_DIR}/gc_verbose_old
 )
+target_include_directories(j9gcvrbjava_full
+	PRIVATE
+		${j9vm_SOURCE_DIR}/gc_verbose_handler_standard_java
+		${j9vm_SOURCE_DIR}/gc_verbose_handler_realtime
+		${j9vm_SOURCE_DIR}/gc_verbose_handler_vlhgc
+		${j9vm_SOURCE_DIR}/gc_verbose_old
+)
+
 target_link_libraries(j9gcvrbjava
 	PRIVATE
 		j9vm_interface
 
 		omrgc
+		j9utilcore
+)
+target_link_libraries(j9gcvrbjava_full
+	PRIVATE
+		j9vm_interface
+
+		omrgc_full
 		j9utilcore
 )

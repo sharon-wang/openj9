@@ -20,16 +20,33 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcvrbhdlrstandardjava STATIC
+set(gc_verbose_handler_realtime_sources
 	VerboseHandlerOutputStandardJava.cpp
 )
 
-target_include_directories(j9gcvrbhdlrstandardjava 
+j9vm_add_library(j9gcvrbhdlrstandardjava STATIC
+	${gc_verbose_handler_realtime_sources}
+)
+j9vm_add_library(j9gcvrbhdlrstandardjava_full STATIC
+	${gc_verbose_handler_realtime_sources}
+)
+
+target_include_directories(j9gcvrbhdlrstandardjava
 	PRIVATE
 		${j9vm_SOURCE_DIR}/gc_verbose_java
 )
+target_include_directories(j9gcvrbhdlrstandardjava_full
+	PRIVATE
+		${j9vm_SOURCE_DIR}/gc_verbose_java
+)
+
 target_link_libraries(j9gcvrbhdlrstandardjava
 	PRIVATE
 		omrgc
 		j9gcvrbjava
+)
+target_link_libraries(j9gcvrbhdlrstandardjava_full
+	PRIVATE
+		omrgc_full
+		j9gcvrbjava_full
 )

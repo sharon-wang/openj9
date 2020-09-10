@@ -21,6 +21,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <module>
+	<xi:include href="objects.xml">
 	<artifact type="static" name="j9modronstartup">
 		<include-if condition="spec.flags.module_gc_modron_startup" />
 		<phase>core quick</phase>
@@ -71,6 +72,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.flags.J9VM_GC_VLHGC"/>
 			</include>
 		</includes>
+		<objects>
+			<group name="gc_modron_startup"/>
+		</objects>
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>

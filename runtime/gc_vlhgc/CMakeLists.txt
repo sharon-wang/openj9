@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-j9vm_add_library(j9gcvlhgc STATIC
+set(gc_vlhgc_sources
 	AllocationContextBalanced.cpp
 	AllocationContextTarok.cpp
 	CardListFlushTask.cpp
@@ -79,8 +79,15 @@ j9vm_add_library(j9gcvlhgc STATIC
 	WorkPacketsVLHGC.cpp
 	WriteOnceCompactor.cpp
 	WriteOnceFixupCardCleaner.cpp
-
 )
+
+j9vm_add_library(j9gcvlhgc STATIC
+	${gc_vlhgc_sources}
+)
+j9vm_add_library(j9gcvlhgc_full STATIC
+	${gc_vlhgc_sources}
+)
+
 target_link_libraries(j9gcvlhgc
 	PRIVATE
 		j9vm_interface
@@ -88,4 +95,12 @@ target_link_libraries(j9gcvlhgc
 		omrgc
 		j9gcstructs
 		j9gcbase
+)
+target_link_libraries(j9gcvlhgc_full
+	PRIVATE
+		j9vm_interface
+
+		omrgc_full
+		j9gcstructs_full
+		j9gcbase_full
 )
