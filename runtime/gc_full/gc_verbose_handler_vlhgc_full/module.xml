@@ -33,18 +33,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
-			<include path="j9gcbase_full"/>
+			<include path="j9gcbase"/>
 			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
-			<include path="j9gcgluejava_full"/>
-			<include path="j9gcinclude_full"/>
+			<include path="j9gcgluejava"/>
+			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
-			<include path="j9gcstats_full"/>
+			<include path="j9gcstats"/>
 			<include path="$(OMR_DIR)/gc/stats" type="relativepath"/>
-			<include path="j9gcstructs_full"/>
+			<include path="j9gcstructs"/>
 			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
-			<include path="j9gcvlhgc_full"/>
+			<include path="j9gcvlhgc"/>
 			<include path="$(OMR_DIR)/gc/verbose" type="relativepath"/>
-			<include path="j9gcvrbjava_full"/>
+			<include path="j9gcvrbjava"/>
 		</includes>
 		<vpaths>
 			<vpath pattern="%" path="../../gc_verbose_handler_vlhgc" augmentIncludes="true" type="relativepath"/>

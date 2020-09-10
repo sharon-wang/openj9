@@ -35,17 +35,17 @@
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
-			<include path="j9gcbase_full"/>
+			<include path="j9gcbase"/>
 			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
-			<include path="j9gcstructs_full"/>
+			<include path="j9gcstructs"/>
 			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
-			<include path="j9gcstats_full"/>
+			<include path="j9gcstats"/>
 			<include path="$(OMR_DIR)/gc/stats" type="relativepath"/>
-			<include path="j9gcinclude_full"/>
+			<include path="j9gcinclude"/>
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 			<include path="$(OMR_DIR)/gc/verbose" type="relativepath"/>
-			<include path="j9gcvrbjava_full"/>
-			<include path="j9gcgluejava_full"/>
+			<include path="j9gcvrbjava"/>
+			<include path="j9gcgluejava"/>
 			<include path="$(OMR_DIR)/gc/verbose/handler_standard" type="relativepath"/>
 		</includes>
 		<vpaths>
