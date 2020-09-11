@@ -281,19 +281,6 @@ target_include_directories(j9vm_gc_includes
 		${j9vm_SOURCE_DIR}/gc_structs
 )
 
-j9vm_add_library(j9vm_gc_includes_full INTERFACE)
-target_include_directories(j9vm_gc_includes_full
-	INTERFACE
-		# Pull in the public include paths exposed by the omrgc library
-		$<TARGET_PROPERTY:omrgc_full,INTERFACE_INCLUDE_DIRECTORIES>
-		# And then the include paths for the code we add ontop of the base omrgc
-		${j9vm_SOURCE_DIR}/gc_include
-		${j9vm_SOURCE_DIR}/gc_glue_java_full
-		${j9vm_SOURCE_DIR}/gc_base_full
-		${j9vm_SOURCE_DIR}/gc_stats_full
-		${j9vm_SOURCE_DIR}/gc_structs_full
-)
-
 # Stub library to simplify programs which use makelib/cmain.c to provide a signal protected main
 j9vm_add_library(j9vm_main_wrapper INTERFACE)
 target_sources(j9vm_main_wrapper INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/makelib/cmain.c)

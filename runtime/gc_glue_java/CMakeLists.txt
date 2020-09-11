@@ -71,7 +71,7 @@ target_link_libraries(j9vm_gc_glue
 target_link_libraries(j9vm_gc_glue_full
 	INTERFACE
 		j9vm_interface
-		j9vm_gc_includes_full
+		j9vm_gc_includes
 
 		j9gcvlhgc_full
 		j9modronstandard_full
@@ -113,7 +113,7 @@ target_sources(j9vm_core_glue
 target_link_libraries(j9vm_core_glue
 	INTERFACE
 		j9vm_interface
-		j9vm_gc_includes # there's two versions of includes...
+		j9vm_gc_includes
 )
 
 # Note: we dont actually need to add any glue for the vm or ras components
