@@ -73,7 +73,8 @@ target_link_libraries(j9modronstartup_full
 	PRIVATE
 		j9vm_interface
 
-		omrgc_full
+		omrgc
+		# omrgc_full
 		j9gcstats_full
 		j9gcbase_full
 		j9utilcore

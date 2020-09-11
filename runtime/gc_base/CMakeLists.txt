@@ -72,7 +72,8 @@ target_link_libraries(j9gcbase_full
 	PRIVATE
 		j9vm_interface
 		j9vm_gc_includes
-		omrgc_full
+		omrgc
+		# omrgc_full
 )
 
 target_enable_ddr(j9gcbase GLOB_HEADERS)

@@ -44,5 +44,6 @@ target_link_libraries(j9gctrcvlhgc
 )
 target_link_libraries(j9gctrcvlhgc_full
 	PRIVATE
-		omrgc_full
+		omrgc
+		# omrgc_full
 )

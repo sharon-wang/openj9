@@ -75,7 +75,8 @@ target_link_libraries(j9gccheck_full
 	PRIVATE
 		j9vm_interface
 
-		omrgc_full
+		omrgc
+		# omrgc_full
 		j9gcbase_full
 		j9gcstructs_full
 		j9gcstats_full

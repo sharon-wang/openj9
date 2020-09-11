@@ -100,7 +100,8 @@ target_link_libraries(j9gcvlhgc_full
 	PRIVATE
 		j9vm_interface
 
-		omrgc_full
+		omrgc
+		# omrgc_full
 		j9gcstructs_full
 		j9gcbase_full
 )

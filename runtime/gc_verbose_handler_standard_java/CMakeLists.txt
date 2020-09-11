@@ -47,6 +47,7 @@ target_link_libraries(j9gcvrbhdlrstandardjava
 )
 target_link_libraries(j9gcvrbhdlrstandardjava_full
 	PRIVATE
-		omrgc_full
+		omrgc
+		# omrgc_full
 		j9gcvrbjava_full
 )

@@ -42,4 +42,5 @@ target_include_directories(j9gcvrbhdlrrealtime_full
 )
 
 target_link_libraries(j9gcvrbhdlrrealtime omrgc)
-target_link_libraries(j9gcvrbhdlrrealtime_full omrgc_full)
+target_link_libraries(j9gcvrbhdlrrealtime_full omrgc)
+# target_link_libraries(j9gcvrbhdlrrealtime_full omrgc_full)

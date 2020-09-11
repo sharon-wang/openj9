@@ -86,7 +86,8 @@ target_link_libraries(j9gc_full
 		j9thr
 		j9stackmap
 		j9pool
-		omrgc_full #LINKING HACK
+		omrgc #LINKING HACK
+		# omrgc_full #LINKING HACK
 		j9hookable
 		j9gcbase_full
 		j9gcstructs_full
@@ -98,7 +99,8 @@ target_link_libraries(j9gc_full
 		j9gctrcvlhgc_full
 		j9realtime_full
 		j9gcvlhgc_full
-		omrgc_full
+		omrgc #LINKING HACK
+		# omrgc_full #LINKING HACK
 
 		#TODO: this is hack to make linking work.
 		# Need to figure out why we need this in CMake but not UMA
@@ -130,7 +132,7 @@ target_include_directories(j9gc
 )
 target_include_directories(j9gc_full
 	PUBLIC
-		$<TARGET_PROPERTY:omrgc_full,INTERFACE_INCLUDE_DIRECTORIES>
+		$<TARGET_PROPERTY:omrgc,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 omr_add_exports(j9gc

@@ -72,5 +72,6 @@ target_link_libraries(j9gctrc_full
 		j9vm_interface
 		j9vm_gc_includes
 
-		omrgc_full
+		omrgc
+		# omrgc_full
 )

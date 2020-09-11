@@ -69,7 +69,8 @@ target_link_libraries(j9gcchk_full
 		j9gcstructs_full
 		j9gcstats_full
 		j9gccheck_full
-		omrgc_full
+		omrgc
+		# omrgc_full
 )
 
 omr_add_exports(j9gcchk J9VMDllMain)
