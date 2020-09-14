@@ -24,9 +24,10 @@
 
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<xi:include href="objects.xml"></xi:include>
+
 	<artifact type="reference" name="j9gcgluejava">
-    	<objects>
-        <group name="gc_glue_java"/>
-      </objects>
+		<objects>
+		<group name="gc_glue_java"/>
+		</objects>
 	</artifact>
 </module>

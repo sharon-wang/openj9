@@ -22,6 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<xi:include href="../../gc_trace/objects.xml"></xi:include>
+
 	<artifact type="static" name="j9gctrc_full">
 		<include-if condition="spec.flags.module_gc_trace" />
 		<phase>core quick</phase>
