@@ -57,15 +57,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9gcvlhgc"/>
 			<include path="$(OMR_DIR)/include_core" type="relativepath"/>
 		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
 		<vpaths>
 			<vpath pattern="%" path="../../gc_base" augmentIncludes="true" type="relativepath"/>
 		</vpaths>
 		<objects>
 			<group name="gc_base"/>
 		</objects>
-		<makefilestubs>
-			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
-			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-		</makefilestubs>
 	</artifact>
 </module>

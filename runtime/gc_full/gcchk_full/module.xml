@@ -60,12 +60,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9gccheck"/>
 			<include path="j9gcgluejava"/>
 		</includes>
-		<vpaths>
-			<vpath pattern="%" path="../../gcchk" augmentIncludes="true" type="relativepath"/>
-		</vpaths>
-		<objects>
-			<group name="gcchk"/>
-		</objects>
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
@@ -87,5 +81,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="omrgcstats" type="external"/>
 			<library name="j9gccheck_full"/>
 		</libraries>
+		<vpaths>
+			<vpath pattern="%" path="../../gcchk" augmentIncludes="true" type="relativepath"/>
+		</vpaths>
+		<objects>
+			<group name="gcchk"/>
+		</objects>
 	</artifact>
 </module>

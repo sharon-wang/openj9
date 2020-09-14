@@ -52,12 +52,12 @@
 			<include path="$(OMR_DIR)/gc/include" type="relativepath"/>
 			<include path="j9gcgluejava"/>
 		</includes>
-		<objects>
-			<group name="gc_vlhgc"/>
-		</objects>
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 		</makefilestubs>
+		<objects>
+			<group name="gc_vlhgc"/>
+		</objects>
 	</artifact>
 </module>

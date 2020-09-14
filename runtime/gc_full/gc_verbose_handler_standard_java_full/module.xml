@@ -46,15 +46,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9gcgluejava"/>
 			<include path="$(OMR_DIR)/gc/verbose/handler_standard" type="relativepath"/>
 		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
 		<vpaths>
 			<vpath pattern="%" path="../../gc_verbose_handler_standard_java" augmentIncludes="true" type="relativepath"/>
 		</vpaths>
 		<objects>
 			<group name="gc_verbose_handler_standard_java"/>
 		</objects>
-		<makefilestubs>
-			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
-			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-		</makefilestubs>
 	</artifact>
 </module>

@@ -46,15 +46,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="$(OMR_DIR)/gc/base/standard" type="relativepath"/>
 			<include path="j9gcgluejava"/>
 		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+		</makefilestubs>
 		<vpaths>
 			<vpath pattern="%" path="../../gc_trace_standard" augmentIncludes="true" type="relativepath"/>
 		</vpaths>
 		<objects>
 			<group name="gc_trace_standard"/>
 		</objects>
-		<makefilestubs>
-			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
-			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-		</makefilestubs>
 	</artifact>
 </module>
