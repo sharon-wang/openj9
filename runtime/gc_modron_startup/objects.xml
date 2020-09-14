@@ -21,14 +21,14 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <objects group="gc_modron_startup">
-	<object name="arrayCopy">
-	<object name="gcmspace">
-	<object name="GCVerboseInterface">
-	<object name="mgcalloc">
-	<object name="mmhelpers">
-	<object name="mminit">
-	<object name="mmparse">
-	<object name="mmparseXgc">
-	<object name="mmparseXgcpolicy">
-	<object name="mmparseXXgc">
+	<object name="arrayCopy"/>
+	<object name="gcmspace"/>
+	<object name="GCVerboseInterface"/>
+	<object name="mgcalloc"/>
+	<object name="mmhelpers"/>
+	<object name="mminit"/>
+	<object name="mmparse"/>
+	<object name="mmparseXgc"/>
+	<object name="mmparseXgcpolicy"/>
+	<object name="mmparseXXgc"/>
 </objects>

@@ -21,10 +21,10 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <objects group="gc_verbose_old">
-	<object name="VerboseEventStream">
-	<object name="VerboseFileLoggingOutput">
-	<object name="VerboseManagerOld">
-	<object name="VerboseOutputAgent">
-	<object name="VerboseStandardStreamOutput">
-	<object name="VerboseTraceOutput">
+	<object name="VerboseEventStream"/>
+	<object name="VerboseFileLoggingOutput"/>
+	<object name="VerboseManagerOld"/>
+	<object name="VerboseOutputAgent"/>
+	<object name="VerboseStandardStreamOutput"/>
+	<object name="VerboseTraceOutput"/>
 </objects>

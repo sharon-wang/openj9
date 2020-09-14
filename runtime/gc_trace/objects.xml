@@ -21,23 +21,23 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <objects group="gc_trace">
-	<object name="Tgc">
-	<object name="TgcAllocation">
-	<object name="TgcAllocationContext">
-	<object name="TgcBacktrace">
-	<object name="TgcCardCleaning">
-	<object name="TgcConcurrent">
-	<object name="TgcConcurrentcardcleaning">
-	<object name="TgcCopyForward">
-	<object name="TgcDump">
-	<object name="TgcExcessivegc">
-	<object name="TgcExclusiveaccess">
-	<object name="TgcExtensions">
-	<object name="TgcFreelist">
-	<object name="TgcHeap">
-	<object name="TgcNuma">
-	<object name="TgcParallel">
-	<object name="TgcRootScanner">
-	<object name="TgcScavenger">
-	<object name="TgcTerse">
+	<object name="Tgc"/>
+	<object name="TgcAllocation"/>
+	<object name="TgcAllocationContext"/>
+	<object name="TgcBacktrace"/>
+	<object name="TgcCardCleaning"/>
+	<object name="TgcConcurrent"/>
+	<object name="TgcConcurrentcardcleaning"/>
+	<object name="TgcCopyForward"/>
+	<object name="TgcDump"/>
+	<object name="TgcExcessivegc"/>
+	<object name="TgcExclusiveaccess"/>
+	<object name="TgcExtensions"/>
+	<object name="TgcFreelist"/>
+	<object name="TgcHeap"/>
+	<object name="TgcNuma"/>
+	<object name="TgcParallel"/>
+	<object name="TgcRootScanner"/>
+	<object name="TgcScavenger"/>
+	<object name="TgcTerse"/>
 </objects>

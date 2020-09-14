@@ -21,12 +21,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <objects group="gc_trace_vlhgc">
-	<object name="TgcDynamicCollectionSet">
-	<object name="TgcIntelligentCompact">
-	<object name="TgcInterRegionReferences">
-	<object name="TgcInterRegionRememberedSet">
-	<object name="TgcInterRegionRememberedSetDemographics">
-	<object name="TgcProjectedStats">
-	<object name="TgcWriteOnceCompaction">
-	<object name="TgcWriteOnceCompactTiming">
+	<object name="TgcDynamicCollectionSet"/>
+	<object name="TgcIntelligentCompact"/>
+	<object name="TgcInterRegionReferences"/>
+	<object name="TgcInterRegionRememberedSet"/>
+	<object name="TgcInterRegionRememberedSetDemographics"/>
+	<object name="TgcProjectedStats"/>
+	<object name="TgcWriteOnceCompaction"/>
+	<object name="TgcWriteOnceCompactTiming"/>
 </objects>

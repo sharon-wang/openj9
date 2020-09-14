@@ -23,7 +23,7 @@
 -->
 
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
-	<xi:include href="objects.xml">
+	<xi:include href="objects.xml"></xi:include>
 	<artifact type="static" name="j9gcvlhgc">
 		<include-if condition="spec.flags.gc_vlhgc" />
 		<phase>core</phase>

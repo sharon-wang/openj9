@@ -21,11 +21,11 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <objects group="gc_modron_standard">
-	<object name="ConcurrentSweepGC">
-	<object name="OwnableSynchronizerObjectBufferStandard">
-	<object name="ReadBarrierVerifier">
-	<object name="ReferenceObjectBufferStandard">
-	<object name="RootScannerReadBarrierVerifier">
-	<object name="StandardAccessBarrier">
-	<object name="UnfinalizedObjectBufferStandard">
+	<object name="ConcurrentSweepGC"/>
+	<object name="OwnableSynchronizerObjectBufferStandard"/>
+	<object name="ReadBarrierVerifier"/>
+	<object name="ReferenceObjectBufferStandard"/>
+	<object name="RootScannerReadBarrierVerifier"/>
+	<object name="StandardAccessBarrier"/>
+	<object name="UnfinalizedObjectBufferStandard"/>
 </objects>
