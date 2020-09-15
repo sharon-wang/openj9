@@ -221,7 +221,17 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 #endif//TR_HOST_X86
             )
                {
-               J9VMDllLoadInfo* gcLoadInfo = FIND_DLL_TABLE_ENTRY( J9_GC_DLL_NAME );
+               J9VMDllLoadInfo* gcLoadInfo = NULL;
+               char *gcDLLName = NULL;
+
+               if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+                  gcDLLName = J9_GC_DLL_NAME;
+               } else {
+                  gcDLLName = J9_GC_FULL_DLL_NAME;
+               }
+
+               gcLoadInfo = FIND_DLL_TABLE_ENTRY(gcDLLName);
+
                if (!IS_STAGE_COMPLETED(gcLoadInfo->completedBits, JCL_INITIALIZED) )//&& vm->memoryManagerFunctions)
                   {
                   vm->memoryManagerFunctions->allocateZeroedTLHPages(vm, true);

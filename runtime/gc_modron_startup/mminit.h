@@ -35,6 +35,7 @@
 struct J9JavaVM;
 struct J9VMThread;
 
+/* need to set to full GC J9_GC_FULL_DLL_NAME??? */
 #define THIS_DLL_NAME J9_GC_DLL_NAME
 
 #ifdef __cplusplus

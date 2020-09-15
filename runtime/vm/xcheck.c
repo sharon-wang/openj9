@@ -99,8 +99,9 @@ processXCheckOptions(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	noGCIndex = OMR_MAX(noGCIndex, noneIndex);
 
 	if (gcIndex > noGCIndex) {
+		char *gccheckDLLName = (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) ? J9_CHECK_GC_DLL_NAME : J9_CHECK_GC_FULL_DLL_NAME;
 		j9vm_args->j9Options[gcIndex].flags |= ARG_REQUIRES_LIBRARY;
-		entry = findDllLoadInfo(loadTable, J9_CHECK_GC_DLL_NAME);
+		entry = findDllLoadInfo(loadTable, gccheckDLLName);
 		entry->loadFlags |= LOAD_BY_DEFAULT;
 	}
 

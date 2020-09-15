@@ -62,6 +62,9 @@ extern"C"{
 #ifndef J9_GC_DLL_NAME
 #define J9_GC_DLL_NAME "j9gc${uma.buildinfo.version.major}${uma.buildinfo.version.minor}"
 #endif
+#ifndef J9_GC_FULL_DLL_NAME
+#define J9_GC_FULL_DLL_NAME "j9gc_full${uma.buildinfo.version.major}${uma.buildinfo.version.minor}"
+#endif
 #ifndef J9_HOOKABLE_DLL_NAME
 #define J9_HOOKABLE_DLL_NAME "j9hookable${uma.buildinfo.version.major}${uma.buildinfo.version.minor}"
 #endif

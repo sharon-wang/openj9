@@ -296,13 +296,13 @@ target_link_libraries(j9vm_main_wrapper
 
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
-set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "") #will need to pick regular or FULL glue???
+set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "") #will need to pick regular or FULL glue??? set to j9vm_gc_glue_full if FULL refs? -- how to check OVERRIDE value OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES
 set(OMR_RAS_GLUE_TARGET "j9vm_ras_glue" CACHE INTERNAL "")
-set(OMR_CORE_GLUE_TARGET "j9vm_core_glue" CACHE INTERNAL "") #will need to pick regular or FULL glue???
+set(OMR_CORE_GLUE_TARGET "j9vm_core_glue" CACHE INTERNAL "")
 set(OMR_UTIL_GLUE_TARGET "j9vm_util_glue" CACHE INTERNAL "")
 
 # setup OMR library overrides
-set(OMR_GC_LIB "j9gc" CACHE INTERNAL "")
+set(OMR_GC_LIB "j9gc" CACHE INTERNAL "") #will need to pick regular or FULL gc??? set to j9gc_full if FULL refs? -- how to check OVERRIDE value OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES
 set(OMR_HOOK_LIB "j9hookable" CACHE INTERNAL "")
 set(OMR_PORT_LIB "j9prt" CACHE INTERNAL "")
 set(OMR_THREAD_LIB "j9thr" CACHE INTERNAL "")

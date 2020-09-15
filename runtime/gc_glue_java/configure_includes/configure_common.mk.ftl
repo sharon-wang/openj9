@@ -47,6 +47,7 @@ CONFIGURE_ARGS += \
   --enable-OMR_PORT_ASYNC_HANDLER \
   --enable-OMR_THR_CUSTOM_SPIN_OPTIONS \
   --enable-OMR_NOTIFY_POLICY_CONTROL
+# --enable OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES ???
 
 # Configure OpenJ9 builds with DDR enabled to use tooling from OMR.
 <#if uma.spec.flags.opt_useOmrDdr.enabled>
