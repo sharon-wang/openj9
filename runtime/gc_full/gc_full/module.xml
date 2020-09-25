@@ -35,7 +35,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<option name="requiresPrimitiveTable"/>
 			<option name="prototypeHeaderFileNames" data="j9protos.h"/>
 			<option name="isCPlusPlus"/>
-			<option name="dllDescription" data="GC"/>
+			<option name="dllDescription" data="GC_FULL"/>
 		</options>
 		<phase>core quick j2se</phase>
 		<dependencies>
