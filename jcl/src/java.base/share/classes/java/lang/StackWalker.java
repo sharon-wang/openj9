@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2020 IBM Corp. and others
+ * Copyright (c) 2016, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -391,8 +391,14 @@ public final class StackWalker {
 					moduleVersion = versionInfo.get().toString();
 				}
 			}
-			return new StackTraceElement(classLoaderName, moduleName, moduleVersion, className, methodName, fileName,
+
+			StackTraceElement element = new StackTraceElement(classLoaderName, moduleName, moduleVersion, className, methodName, fileName,
 					lineNumber);
+
+			ClassLoader classLoader = getDeclaringClass().getClassLoader();
+			element.setIncludeInfoFlags(classLoader);
+
+			return element;
 		}
 
 		/*[IF JAVA_SPEC_VERSION >= 10]*/

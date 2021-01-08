@@ -4,7 +4,7 @@ package java.lang;
 import com.ibm.oti.util.Util;
 
 /*******************************************************************************
- * Copyright (c) 2002, 2020 IBM Corp. and others
+ * Copyright (c) 2002, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,10 +32,12 @@ import com.ibm.oti.util.Util;
  */
 public final class StackTraceElement implements java.io.Serializable {
 	private static final long serialVersionUID = 6992337162326171013L;
-	/*[IF Sidecar19-SE]*/	
+	/*[IF Sidecar19-SE]*/
 	private final String moduleName;
 	private final String moduleVersion;
 	private final String classLoaderName;
+	private transient boolean includeClassLoaderName;
+	private transient boolean includeModuleVersion;
 	/*[ENDIF]*/
 	private final String declaringClass;
 	private final String methodName;
@@ -57,6 +59,13 @@ public StackTraceElement(String cls, String method, String file, int line) {
 	moduleName = null;
 	moduleVersion = null;
 	classLoaderName = null;
+	/**
+	 * includeClassLoaderName and includeModuleVersion are initialized to
+	 * true for publicly constructed StackTraceElements, as this information
+	 * is to be included when the element is printed.
+	 */
+	includeClassLoaderName = true;
+	includeModuleVersion = true;
 	/*[ENDIF]*/	
 	declaringClass = cls;
 	methodName = method;
@@ -86,6 +95,13 @@ public StackTraceElement(String classLoaderName, String module, String version, 
 	fileName = file;
 	lineNumber = line;
 	this.classLoaderName = classLoaderName;
+	/**
+	 * includeClassLoaderName and includeModuleVersion are initialized to
+	 * true for publicly constructed StackTraceElements, as this information
+	 * is to be included when the element is printed.
+	 */
+	includeClassLoaderName = true;
+	includeModuleVersion = true;
 }
 
 /**
@@ -104,6 +120,13 @@ private StackTraceElement() {
 	moduleName = null;
 	moduleVersion = null;
 	classLoaderName = null;
+	/**
+	 * includeClassLoaderName and includeModuleVersion are initialized to
+	 * false for internally constructed StackTraceElements, as these fields
+	 * are to be set natively.
+	 */
+	includeClassLoaderName = false;
+	includeModuleVersion = false;
 	/*[ENDIF]*/	
 	declaringClass = null;
 	methodName = null;
@@ -157,8 +180,49 @@ public String getModuleName() {
 public String getModuleVersion() {
 	return moduleVersion;
 }
+
+/**
+ * Returns whether the classloader name should be included in the stack trace for the provided StackTraceElement.
+ *
+ * @return true if the classloader name should be included, false otherwise.
+ */
+boolean getIncludeClassLoaderName() {
+	return includeClassLoaderName;
+}
+
+/**
+ * Returns whether the module version should be included in the stack trace for the provided StackTraceElement.
+ *
+ * @return true if the module version should be included, false otherwise.
+ */
+boolean getIncludeModuleVersion() {
+	return includeModuleVersion;
+}
+
+/**
+ * Set the includeClassLoaderName and includeModuleVersion fields for this StackTraceElement.
+ *
+ * @param classLoader the classloader for the StackTraceElement.
+ */
+void setIncludeInfoFlags(ClassLoader classLoader) {
+	/**
+	 * If the classloader is one of the Platform or Bootstrap built-in classloaders,
+	 * don't include its name or module version in the stack trace. If it is the
+	 * Application/System built-in classloader, don't include the class name, but
+	 * include the module version.
+	 */
+	if ((null == classLoader)
+		|| (ClassLoader.getPlatformClassLoader() == classLoader) // VM: Extension ClassLoader
+		|| (ClassLoader.bootstrapClassLoader == classLoader) // VM: System ClassLoader
+	) {
+		includeClassLoaderName = false;
+		includeModuleVersion = false;
+	} else if ((ClassLoader.getSystemClassLoader() == classLoader)) { // VM: Application ClassLoader
+		includeClassLoaderName = false;
+	}
+}
 /*[ENDIF]*/
- 
+
 /**
  * Returns the full name (i.e. including package) of the class where this
  * stack trace element is executing.
@@ -243,7 +307,18 @@ public boolean isNativeMethod() {
 @Override
 public String toString() {
 	StringBuilder buf = new StringBuilder(80);
-	Util.printStackTraceElement(this, source, buf, false);
+	/**
+	 * includeExtendedInfo is essentially a check to see if this StackTraceElement
+	 * was created using a public constructor. Both includeClassLoaderName and
+	 * includeModuleVersion are initialized to true in the public constructors,
+	 * since these pieces of information are to be included in the stack trace.
+	 *
+	 * It's also possible that both of these flags are set to true natively,
+	 * in which case we still want to include extended info when printing the
+	 * stack trace.
+	 */
+	boolean includeExtendedInfo = includeClassLoaderName && includeModuleVersion;
+	Util.printStackTraceElement(this, source, buf, includeExtendedInfo);
 	return buf.toString();
 }
 
