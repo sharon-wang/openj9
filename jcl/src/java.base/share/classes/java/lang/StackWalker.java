@@ -395,7 +395,13 @@ public final class StackWalker {
 			StackTraceElement element = new StackTraceElement(classLoaderName, moduleName, moduleVersion, className, methodName, fileName,
 					lineNumber);
 
-			ClassLoader classLoader = getDeclaringClass().getClassLoader();
+			StackWalker thisStackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+
+			// check JVM for the declaring class of this instance
+			// get the classloader of this declaring class
+			// set the STE values based on the declaring class
+
+			ClassLoader classLoader = thisStackWalker.getDeclaringClass().getClassLoader();
 			element.setIncludeInfoFlags(classLoader);
 
 			return element;

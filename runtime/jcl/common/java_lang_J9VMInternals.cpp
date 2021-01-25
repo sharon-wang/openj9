@@ -45,5 +45,18 @@ Java_java_lang_J9VMInternals_getStackTrace(JNIEnv * env, jclass recv, jobject th
 	return result;
 }
 
+jobject JNICALL
+Java_java_lang_J9VMInternals_getStackTraceElement(JNIEnv * env, jclass recv, jobject stackFrame, jboolean pruneConstructors)
+{
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t traceObject = (j9object_t)getStackTraceElement(currentThread, (j9object_t*)stackFrame, (UDATA)pruneConstructors);
+	jobject result = vmFuncs->j9jni_createLocalRef(env, traceObject);
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
+}
 
 }

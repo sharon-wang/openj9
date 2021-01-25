@@ -375,6 +375,39 @@ retry:
 	return result;
 }
 
+J9Object *
+getStackTraceElement(J9VMThread *vmThread, j9object_t *stackFrameAddr, UDATA pruneConstructors)
+{
+	J9JavaVM * vm = vmThread->javaVM;
+	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions * mmfns = vm->memoryManagerFunctions;
+	J9Class * elementClass;
+	J9GetStackTraceUserData userData;
+	J9Object * result;
+
+	elementClass = J9VMJAVALANGSTACKTRACEELEMENT_OR_NULL(vm);
+
+	result = (j9array_t) mmfns->J9AllocateObject(
+		vmThread, elementClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (result == NULL) {
+		vmFuncs->setHeapOutOfMemoryError(vmThread);
+		return NULL;
+	}
+
+	/* Fill in the stack trace */
+	userData.elementClass = elementClass;
+	userData.index = 0;
+	userData.maxFrames = 0;
+	userData.previousFileName = NULL;
+	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, (j9object_t) result);
+	vmFuncs->iterateStackTrace(vmThread, stackFrameAddr, getStackTraceIterator, &userData, pruneConstructors);
+	result = (j9object_t) POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+
+	/* Return the result - any pending exception will be checked by the caller and the result discarded */
+
+	return result;
+}
+
 /**
  * Set the includeClassLoaderName and includeModuleVersion fields for a StackTraceElement.
  *
