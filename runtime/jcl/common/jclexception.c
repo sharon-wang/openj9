@@ -404,13 +404,13 @@ setStackTraceElementFields(J9VMThread *vmThread, j9object_t element, J9ClassLoad
 		|| (vm->extensionClassLoader == classLoader) // JRE: Platform ClassLoader
 		|| (vm->systemClassLoader == classLoader) // JRE: Bootstrap ClassLoader
 	) {
-		includeClassLoaderName = FALSE;
-		includeModuleVersion = FALSE;
+		includeClassLoaderName = (BOOLEAN) FALSE;
+		includeModuleVersion = (BOOLEAN) FALSE;
 	} else if (vm->applicationClassLoader == classLoader) { // JRE: System ClassLoader
-		includeClassLoaderName = FALSE;
+		includeClassLoaderName = (BOOLEAN) FALSE;
 	}
 
-	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDECLASSLOADERNAME(vmThread, element, (U_32) includeClassLoaderName);
-	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDEMODULEVERSION(vmThread, element, (U_32) includeModuleVersion);
+	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDECLASSLOADERNAME(vmThread, element, includeClassLoaderName);
+	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDEMODULEVERSION(vmThread, element, includeModuleVersion);
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
