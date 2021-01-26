@@ -410,7 +410,7 @@ setStackTraceElementFields(J9VMThread *vmThread, j9object_t element, J9ClassLoad
 		includeClassLoaderName = FALSE;
 	}
 
-	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDECLASSLOADERNAME(vmThread, element, includeClassLoaderName);
-	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDEMODULEVERSION(vmThread, element, includeModuleVersion);
+	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDECLASSLOADERNAME(vmThread, element, (U_32) includeClassLoaderName);
+	J9VMJAVALANGSTACKTRACEELEMENT_SET_INCLUDEMODULEVERSION(vmThread, element, (U_32) includeModuleVersion);
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
