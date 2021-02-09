@@ -155,14 +155,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if ((0 <= index) && (index < length)) {
 			return;
 		}
-		throw new StringIndexOutOfBoundsException("index="+index + " length="+length); //$NON-NLS-1$ //$NON-NLS-2$
+		throw new StringIndexOutOfBoundsException("index=" + index + ", length=" + length); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	static void checkOffset(int offset, int length) {
 		if ((0 <= offset) && (offset <= length)) {
 			return;
 		}
-		throw new StringIndexOutOfBoundsException("offset="+offset + " length="+length); //$NON-NLS-1$ //$NON-NLS-2$
+		throw new StringIndexOutOfBoundsException("offset=" + offset + ", length=" + length); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/**
@@ -446,11 +446,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return;
 		}
 
-		throw newStringIndexOutOfBoundsException(offset, count, length);
-	}
-
-	static private StringIndexOutOfBoundsException newStringIndexOutOfBoundsException(int offset, int count, int length) {
-		return new StringIndexOutOfBoundsException("offset = " + offset + " count = " + count + " length = " + length); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		throw new StringIndexOutOfBoundsException("offset=" + offset + ", count=" + count + ", length=" + length); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	/**
@@ -545,17 +541,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(byte[] data, int start, int length) {
 		data.getClass(); // Implicit null check
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			StringCoding.Result scResult = StringCoding.decode(data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-			value = scResult.value;
-			coder = scResult.coder;
+		StringCoding.Result scResult = StringCoding.decode(data, start, length);
 
-			if (COMPACT_STRINGS && scResult.coder == UTF16) {
-				initCompressionFlag();
-			}
-		} else {
-			throw new StringIndexOutOfBoundsException();
+		value = scResult.value;
+		coder = scResult.coder;
+
+		if (COMPACT_STRINGS && scResult.coder == UTF16) {
+			initCompressionFlag();
 		}
 	}
 
@@ -582,28 +576,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(byte[] data, int high, int start, int length) {
 		data.getClass(); // Implicit null check
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			if (COMPACT_STRINGS && high == 0) {
-				value = new byte[length];
-				coder = LATIN1;
+		checkBoundsOffCount(start, length, data.length);
 
-				compressedArrayCopy(data, start, value, 0, length);
-			} else {
-				value = StringUTF16.newBytesFor(length);
-				coder = UTF16;
+		if (COMPACT_STRINGS && high == 0) {
+			value = new byte[length];
+			coder = LATIN1;
 
-				high <<= 8;
-
-				for (int i = 0; i < length; ++i) {
-					helpers.putCharInArrayByIndex(value, i, (char) (high + (data[start++] & 0xff)));
-				}
-
-				if (COMPACT_STRINGS) {
-					initCompressionFlag();
-				}
-			}
+			compressedArrayCopy(data, start, value, 0, length);
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = StringUTF16.newBytesFor(length);
+			coder = UTF16;
+
+			high <<= 8;
+
+			for (int i = 0; i < length; ++i) {
+				helpers.putCharInArrayByIndex(value, i, (char) (high + (data[start++] & 0xff)));
+			}
+
+			if (COMPACT_STRINGS) {
+				initCompressionFlag();
+			}
 		}
 	}
 
@@ -644,17 +636,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		data.getClass(); // Implicit null check
 		encoding.getClass(); // Implicit null check
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			StringCoding.Result scResult = StringCoding.decode(encoding, data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-			value = scResult.value;
-			coder = scResult.coder;
+		StringCoding.Result scResult = StringCoding.decode(encoding, data, start, length);
 
-			if (COMPACT_STRINGS && scResult.coder == UTF16) {
-				initCompressionFlag();
-			}
-		} else {
-			throw new StringIndexOutOfBoundsException();
+		value = scResult.value;
+		coder = scResult.coder;
+
+		if (COMPACT_STRINGS && scResult.coder == UTF16) {
+			initCompressionFlag();
 		}
 	}
 
@@ -784,24 +774,22 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *          when data is null
 	 */
 	public String(char[] data, int start, int length) {
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			if (COMPACT_STRINGS && canEncodeAsLatin1(data, start, length)) {
-				value = new byte[length];
-				coder = LATIN1;
+		checkBoundsOffCount(start, length, data.length);
 
-				compress(data, start, value, 0, length);
-			} else {
-				value = StringUTF16.newBytesFor(length);
-				coder = UTF16;
+		if (COMPACT_STRINGS && canEncodeAsLatin1(data, start, length)) {
+			value = new byte[length];
+			coder = LATIN1;
 
-				decompressedArrayCopy(data, start, value, 0, length);
-
-				if (COMPACT_STRINGS) {
-					initCompressionFlag();
-				}
-			}
+			compress(data, start, value, 0, length);
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = StringUTF16.newBytesFor(length);
+			coder = UTF16;
+
+			decompressedArrayCopy(data, start, value, 0, length);
+
+			if (COMPACT_STRINGS) {
+				initCompressionFlag();
+			}
 		}
 	}
 
@@ -1370,7 +1358,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				return helpers.getCharFromArrayByIndex(value, index);
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			throw new StringIndexOutOfBoundsException(index);
 		}
 	}
 
@@ -1912,15 +1900,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	@Deprecated(forRemoval=false, since="1.1")
 	public void getBytes(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
-				compressedArrayCopy(value, start, data, index, end - start);
-			} else {
-				compress(value, start, data, index, end - start);
-			}
+		checkBoundsBeginEnd(start, end, lengthInternal());
+		checkBoundsOffCount(index, end - start, data.length);
+
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
+			compressedArrayCopy(value, start, data, index, end - start);
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			compress(value, start, data, index, end - start);
 		}
 	}
 
@@ -1960,11 +1947,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *          when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
-			getCharsNoBoundChecks(start, end, data, index);
-		} else {
-			throw new StringIndexOutOfBoundsException();
-		}
+		checkBoundsBeginEnd(start, end, lengthInternal());
+		checkBoundsOffCount(index, end - start, data.length);
+
+		getCharsNoBoundChecks(start, end, data, index);
 	}
 
 	// This is a package protected method that performs the getChars operation without explicit bound checks.
@@ -2734,6 +2720,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 
 		int len = lengthInternal();
+		int lenStartDiff = len - start;
+
+		if (lenStartDiff < 0) {
+			throw new StringIndexOutOfBoundsException(lenStartDiff);
+		}
 
 		if (0 <= start && start <= len) {
 			boolean isCompressed = false;
@@ -2768,17 +2759,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return this;
 		}
 
-		if (0 <= start && start <= end && end <= len) {
-			boolean isCompressed = false;
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
-				isCompressed = true;
-			}
+		checkBoundsBeginEnd(start, end, len);
 
-			return new String(value, start, end - start, isCompressed, enableSharingInSubstringWhenOffsetIsZero);
-		} else {
-			throw new StringIndexOutOfBoundsException(start);
+		boolean isCompressed = false;
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
+			isCompressed = true;
 		}
+
+		return new String(value, start, end - start, isCompressed, enableSharingInSubstringWhenOffsetIsZero);
 	}
 
 	/**
@@ -3432,29 +3421,27 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @since 1.5
 	 */
 	public String(int[] data, int start, int length) {
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			if (COMPACT_STRINGS) {
-				byte[] bytes = StringLatin1.toBytes(data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-				if (bytes != null) {
-					value = bytes;
-					coder = LATIN1;
-				} else {
-					bytes = StringUTF16.toBytes(data, start, length);
+		if (COMPACT_STRINGS) {
+			byte[] bytes = StringLatin1.toBytes(data, start, length);
 
-					value = bytes;
-					coder = UTF16;
-
-					initCompressionFlag();
-				}
+			if (bytes != null) {
+				value = bytes;
+				coder = LATIN1;
 			} else {
-				byte[] bytes = StringUTF16.toBytes(data, start, length);
+				bytes = StringUTF16.toBytes(data, start, length);
 
 				value = bytes;
 				coder = UTF16;
+
+				initCompressionFlag();
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			byte[] bytes = StringUTF16.toBytes(data, start, length);
+
+			value = bytes;
+			coder = UTF16;
 		}
 	}
 
@@ -3482,25 +3469,23 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public int codePointAt(int index) {
 		int len = lengthInternal();
 
-		if (index >= 0 && index < len) {
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
-				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
-			} else {
-				char high = charAtInternal(index);
+		checkIndex(index, len);
 
-				if ((index < (len - 1)) && Character.isHighSurrogate(high)) {
-					char low = charAtInternal(index + 1);
-
-					if (Character.isLowSurrogate(low)) {
-						return Character.toCodePoint(high, low);
-					}
-				}
-
-				return high;
-			}
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || coder == LATIN1)) {
+			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 		} else {
-			throw new StringIndexOutOfBoundsException(index);
+			char high = charAtInternal(index);
+
+			if ((index < (len - 1)) && Character.isHighSurrogate(high)) {
+				char low = charAtInternal(index + 1);
+
+				if (Character.isLowSurrogate(low)) {
+					return Character.toCodePoint(high, low);
+				}
+			}
+
+			return high;
 		}
 	}
 
@@ -3897,17 +3882,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			throw new NullPointerException();
 		}
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			StringCoding.Result scResult = StringCoding.decode(charset, data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-			value = scResult.value;
-			coder = scResult.coder;
+		StringCoding.Result scResult = StringCoding.decode(charset, data, start, length);
 
-			if (COMPACT_STRINGS) {
-				initCompressionFlag();
-			}
-		} else {
-			throw new StringIndexOutOfBoundsException();
+		value = scResult.value;
+		coder = scResult.coder;
+
+		if (COMPACT_STRINGS) {
+			initCompressionFlag();
 		}
 	}
 
@@ -3974,7 +3957,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if ((begin >= 0) && (begin <= end) && (end <= length)) {
 			return;
 		}
-		throw newStringIndexOutOfBoundsException(begin, end, length);
+
+		throw new StringIndexOutOfBoundsException("begin=" + begin + ", end=" + end + ", length=" + length); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	@Override
@@ -4421,27 +4405,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(byte[] data, int start, int length) {
 		data.getClass(); // Implicit null check
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			char[] buffer = StringCoding.decode(data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-			if (COMPACT_STRINGS) {
-				if (canEncodeAsLatin1(buffer, 0, buffer.length)) {
-					value = new char[(buffer.length + 1) >>> 1];
-					count = buffer.length;
+		char[] buffer = StringCoding.decode(data, start, length);
 
-					compress(buffer, 0, value, 0, buffer.length);
-				} else {
-					value = buffer;
-					count = buffer.length | uncompressedBit;
+		if (COMPACT_STRINGS) {
+			if (canEncodeAsLatin1(buffer, 0, buffer.length)) {
+				value = new char[(buffer.length + 1) >>> 1];
+				count = buffer.length;
 
-					initCompressionFlag();
-				}
+				compress(buffer, 0, value, 0, buffer.length);
 			} else {
 				value = buffer;
-				count = buffer.length;
+				count = buffer.length | uncompressedBit;
+
+				initCompressionFlag();
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = buffer;
+			count = buffer.length;
 		}
 	}
 
@@ -4468,38 +4450,36 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(byte[] data, int high, int start, int length) {
 		data.getClass(); // Implicit null check
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			if (COMPACT_STRINGS) {
-				if (high == 0) {
-					value = new char[(length + 1) >>> 1];
-					count = length;
+		checkBoundsOffCount(start, length, data.length);
 
-					compressedArrayCopy(data, start, value, 0, length);
-				} else {
-					value = new char[length];
-					count = length | uncompressedBit;
+		if (COMPACT_STRINGS) {
+			if (high == 0) {
+				value = new char[(length + 1) >>> 1];
+				count = length;
 
-					high <<= 8;
-
-					for (int i = 0; i < length; ++i) {
-						value[i] = (char) (high + (data[start++] & 0xff));
-					}
-
-					initCompressionFlag();
-				}
-
+				compressedArrayCopy(data, start, value, 0, length);
 			} else {
 				value = new char[length];
-				count = length;
+				count = length | uncompressedBit;
 
 				high <<= 8;
 
 				for (int i = 0; i < length; ++i) {
 					value[i] = (char) (high + (data[start++] & 0xff));
 				}
+
+				initCompressionFlag();
 			}
+
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = new char[length];
+			count = length;
+
+			high <<= 8;
+
+			for (int i = 0; i < length; ++i) {
+				value[i] = (char) (high + (data[start++] & 0xff));
+			}
 		}
 	}
 
@@ -4541,27 +4521,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		data.getClass(); // Implicit null check
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			char[] buffer = StringCoding.decode(encoding, data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-			if (COMPACT_STRINGS) {
-				if (canEncodeAsLatin1(buffer, 0, buffer.length)) {
-					value = new char[(buffer.length + 1) >>> 1];
-					count = buffer.length;
+		char[] buffer = StringCoding.decode(encoding, data, start, length);
 
-					compress(buffer, 0, value, 0, buffer.length);
-				} else {
-					value = buffer;
-					count = buffer.length | uncompressedBit;
+		if (COMPACT_STRINGS) {
+			if (canEncodeAsLatin1(buffer, 0, buffer.length)) {
+				value = new char[(buffer.length + 1) >>> 1];
+				count = buffer.length;
 
-					initCompressionFlag();
-				}
+				compress(buffer, 0, value, 0, buffer.length);
 			} else {
 				value = buffer;
-				count = buffer.length;
+				count = buffer.length | uncompressedBit;
+
+				initCompressionFlag();
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = buffer;
+			count = buffer.length;
 		}
 	}
 
@@ -4702,29 +4680,27 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *          when data is null
 	 */
 	public String(char[] data, int start, int length) {
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			if (COMPACT_STRINGS) {
-				if (canEncodeAsLatin1(data, start, length)) {
-					value = new char[(length + 1) >>> 1];
-					count = length;
+		checkBoundsOffCount(start, length, data.length);
 
-					compress(data, start, value, 0, length);
-				} else {
-					value = new char[length];
-					count = length | uncompressedBit;
-
-					System.arraycopy(data, start, value, 0, length);
-
-					initCompressionFlag();
-				}
-			} else {
-				value = new char[length];
+		if (COMPACT_STRINGS) {
+			if (canEncodeAsLatin1(data, start, length)) {
+				value = new char[(length + 1) >>> 1];
 				count = length;
 
+				compress(data, start, value, 0, length);
+			} else {
+				value = new char[length];
+				count = length | uncompressedBit;
+
 				System.arraycopy(data, start, value, 0, length);
+
+				initCompressionFlag();
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = new char[length];
+			count = length;
+
+			System.arraycopy(data, start, value, 0, length);
 		}
 	}
 
@@ -5432,7 +5408,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return value[index];
 		}
 
-		throw new StringIndexOutOfBoundsException();
+		throw new StringIndexOutOfBoundsException(index);
 	}
 
 	// Internal version of charAt used for extracting a char from a String in compression related code.
@@ -5947,28 +5923,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	@Deprecated
 	public void getBytes(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
-				compressedArrayCopy(value, start, data, index, end - start);
-			} else {
-				compress(value, start, data, index, end - start);
-			}
+		checkBoundsBeginEnd(start, end, lengthInternal());
+		checkBoundsOffCount(index, end - start, data.length);
+
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
+			compressedArrayCopy(value, start, data, index, end - start);
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			compress(value, start, data, index, end - start);
 		}
 	}
 
 	void getBytes(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
-				compressedArrayCopy(value, start, data, index, end - start);
-			} else {
-				compress(value, start, data, index, end - start);
-			}
+		checkBoundsBeginEnd(start, end, lengthInternal());
+
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
+			compressedArrayCopy(value, start, data, index, end - start);
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			compress(value, start, data, index, end - start);
 		}
 	}
 
@@ -6023,14 +5996,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *          when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
-			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
-				decompress(value, start, data, index, end - start);
-			} else {
-				System.arraycopy(value, start, data, index, end - start);
-			}
+		checkBoundsBeginEnd(start, end, lengthInternal());
+		checkBoundsOffCount(index, end - start, data.length);
+
+		if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
+			decompress(value, start, data, index, end - start);
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			System.arraycopy(value, start, data, index, end - start);
 		}
 	}
 
@@ -6737,6 +6709,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 
 		int len = lengthInternal();
+		int offsetLengthDiff = len - start;
+
+		if (offsetLengthDiff < 0) {
+			throw new StringIndexOutOfBoundsException(offsetLengthDiff);
+		}
 
 		if (0 <= start && start <= len) {
 			// Check if the String is compressed
@@ -6769,15 +6746,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return this;
 		}
 
-		if (0 <= start && start <= end && end <= len) {
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
-				return new String(value, start, end - start, true, enableSharingInSubstringWhenOffsetIsZero);
-			} else {
-				return new String(value, start, end - start, false, enableSharingInSubstringWhenOffsetIsZero);
-			}
+		checkBoundsBeginEnd(start, end, len);
+
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
+			return new String(value, start, end - start, true, enableSharingInSubstringWhenOffsetIsZero);
 		} else {
-			throw new StringIndexOutOfBoundsException(start);
+			return new String(value, start, end - start, false, enableSharingInSubstringWhenOffsetIsZero);
 		}
 	}
 
@@ -7823,86 +7798,84 @@ written authorization of the copyright holder.
 	 * @since 1.5
 	 */
 	public String(int[] data, int start, int length) {
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			int size = 0;
+		checkBoundsOffCount(start, length, data.length);
 
-			// Optimistically assume we can compress data[]
-			boolean canEncodeAsLatin1 = COMPACT_STRINGS;
+		int size = 0;
 
-			for (int i = start; i < start + length; ++i) {
-				int codePoint = data[i];
+		// Optimistically assume we can compress data[]
+		boolean canEncodeAsLatin1 = COMPACT_STRINGS;
 
-				if (codePoint < Character.MIN_CODE_POINT) {
-					throw new IllegalArgumentException();
-				} else if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-					if (canEncodeAsLatin1 && codePoint > 255) {
+		for (int i = start; i < start + length; ++i) {
+			int codePoint = data[i];
+
+			if (codePoint < Character.MIN_CODE_POINT) {
+				throw new IllegalArgumentException();
+			} else if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+				if (canEncodeAsLatin1 && codePoint > 255) {
+					canEncodeAsLatin1 = false;
+				}
+
+				++size;
+			} else if (codePoint <= Character.MAX_CODE_POINT) {
+				if (canEncodeAsLatin1) {
+					codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
+
+					int codePoint1 = Character.MIN_HIGH_SURROGATE + (codePoint >> 10);
+					int codePoint2 = Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF);
+
+					if (codePoint1 > 255 || codePoint2 > 255) {
 						canEncodeAsLatin1 = false;
 					}
-
-					++size;
-				} else if (codePoint <= Character.MAX_CODE_POINT) {
-					if (canEncodeAsLatin1) {
-						codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
-
-						int codePoint1 = Character.MIN_HIGH_SURROGATE + (codePoint >> 10);
-						int codePoint2 = Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF);
-
-						if (codePoint1 > 255 || codePoint2 > 255) {
-							canEncodeAsLatin1 = false;
-						}
-					}
-
-					size += 2;
-				} else {
-					throw new IllegalArgumentException();
 				}
-			}
 
-			if (canEncodeAsLatin1) {
-				value = new char[(size + 1) >>> 1];
-				count = size;
-
-				for (int i = start, j = 0; i < start + length; ++i) {
-					int codePoint = data[i];
-
-					if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-						helpers.putByteInArrayByIndex(value, j++, (byte) codePoint);
-					} else {
-						codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
-
-						int codePoint1 = Character.MIN_HIGH_SURROGATE + (codePoint >> 10);
-						int codePoint2 = Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF);
-
-						helpers.putByteInArrayByIndex(value, j++, (byte) codePoint1);
-						helpers.putByteInArrayByIndex(value, j++, (byte) codePoint2);
-					}
-				}
+				size += 2;
 			} else {
-				value = new char[size];
+				throw new IllegalArgumentException();
+			}
+		}
 
-				if (COMPACT_STRINGS) {
-					count = size | uncompressedBit;
+		if (canEncodeAsLatin1) {
+			value = new char[(size + 1) >>> 1];
+			count = size;
 
-					initCompressionFlag();
+			for (int i = start, j = 0; i < start + length; ++i) {
+				int codePoint = data[i];
+
+				if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+					helpers.putByteInArrayByIndex(value, j++, (byte) codePoint);
 				} else {
-					count = size;
-				}
+					codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
 
-				for (int i = start, j = 0; i < start + length; ++i) {
-					int codePoint = data[i];
+					int codePoint1 = Character.MIN_HIGH_SURROGATE + (codePoint >> 10);
+					int codePoint2 = Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF);
 
-					if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-						value[j++] = (char) codePoint;
-					} else {
-						codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
-
-						value[j++] = (char) (Character.MIN_HIGH_SURROGATE + (codePoint >> 10));
-						value[j++] = (char) (Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF));
-					}
+					helpers.putByteInArrayByIndex(value, j++, (byte) codePoint1);
+					helpers.putByteInArrayByIndex(value, j++, (byte) codePoint2);
 				}
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = new char[size];
+
+			if (COMPACT_STRINGS) {
+				count = size | uncompressedBit;
+
+				initCompressionFlag();
+			} else {
+				count = size;
+			}
+
+			for (int i = start, j = 0; i < start + length; ++i) {
+				int codePoint = data[i];
+
+				if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+					value[j++] = (char) codePoint;
+				} else {
+					codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
+
+					value[j++] = (char) (Character.MIN_HIGH_SURROGATE + (codePoint >> 10));
+					value[j++] = (char) (Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF));
+				}
+			}
 		}
 	}
 
@@ -7945,25 +7918,23 @@ written authorization of the copyright holder.
 	public int codePointAt(int index) {
 		int len = lengthInternal();
 
-		if (index >= 0 && index < len) {
-			// Check if the String is compressed
-			if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
-				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
-			} else {
-				char high = charAtInternal(index);
+		checkIndex(index, len);
 
-				if ((index < (len - 1)) && Character.isHighSurrogate(high)) {
-					char low = charAtInternal(index + 1);
-
-					if (Character.isLowSurrogate(low)) {
-						return Character.toCodePoint(high, low);
-					}
-				}
-
-				return high;
-			}
+		// Check if the String is compressed
+		if (COMPACT_STRINGS && (null == compressionFlag || count >= 0)) {
+			return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
 		} else {
-			throw new StringIndexOutOfBoundsException(index);
+			char high = charAtInternal(index);
+
+			if ((index < (len - 1)) && Character.isHighSurrogate(high)) {
+				char low = charAtInternal(index + 1);
+
+				if (Character.isLowSurrogate(low)) {
+					return Character.toCodePoint(high, low);
+				}
+			}
+
+			return high;
 		}
 	}
 
@@ -8360,27 +8331,25 @@ written authorization of the copyright holder.
 			throw new NullPointerException();
 		}
 
-		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			char[] chars = StringCoding.decode(charset, data, start, length);
+		checkBoundsOffCount(start, length, data.length);
 
-			if (COMPACT_STRINGS) {
-				if (canEncodeAsLatin1(chars, 0, chars.length)) {
-					value = new char[(chars.length + 1) >>> 1];
-					count = chars.length;
+		char[] chars = StringCoding.decode(charset, data, start, length);
 
-					compress(chars, 0, value, 0, chars.length);
-				} else {
-					value = chars;
-					count = chars.length | uncompressedBit;
+		if (COMPACT_STRINGS) {
+			if (canEncodeAsLatin1(chars, 0, chars.length)) {
+				value = new char[(chars.length + 1) >>> 1];
+				count = chars.length;
 
-					initCompressionFlag();
-				}
+				compress(chars, 0, value, 0, chars.length);
 			} else {
 				value = chars;
-				count = chars.length;
+				count = chars.length | uncompressedBit;
+
+				initCompressionFlag();
 			}
 		} else {
-			throw new StringIndexOutOfBoundsException();
+			value = chars;
+			count = chars.length;
 		}
 	}
 
