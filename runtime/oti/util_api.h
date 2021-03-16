@@ -68,6 +68,36 @@ alignedMemcpy(J9VMThread *vmStruct, void *dest, void *source, UDATA bytes, UDATA
 void
 alignedBackwardsMemcpy(J9VMThread *vmStruct, void *dest, void *source, UDATA bytes, UDATA alignment);
 
+/* ---------------- annhelp.c ---------------- */
+
+/**
+* @brief
+* @param clazz
+* @param cpIndex
+* @param annotationName
+* @return true if...
+*/
+BOOLEAN
+fieldContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
+
+/**
+* @brief
+* @param clazz
+* @param cpIndex
+* @param annotationName
+* @return true if...
+*/
+BOOLEAN
+methodContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
+
+/**
+* @brief
+* @param romClass
+* @param romFieldShape
+* @return The constant pool index or -1 if error
+*/
+IDATA
+getConstantPoolIndexForField(J9ROMClass *romClass, J9ROMFieldShape *romFieldShape);
 
 /* ---------------- argbits.c ---------------- */
 

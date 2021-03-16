@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -180,5 +180,20 @@ jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *const
 
 	return sigUTF;
 }
+
+// bool
+// jitIsFieldStable(J9Class *clazz, UDATA cpIndex) {
+// 	return fieldContainsRuntimeAnnotation(clazz, cpIndex, "LStable;"); // convert from char to j9utf8
+// }
+
+// bool
+// isMethodTaggedWithForceInline(J9Class *clazz, UDATA cpIndex) {
+// 	// return methodContainsRuntimeAnnotation(clazz, cpIndex, "LForceInline;"); // convert from char to j9utf8
+// }
+
+// bool
+// isMethodTaggedWithIntrinsicCandidate(J9Class *clazz, UDATA cpIndex) {
+// 	// return methodContainsRuntimeAnnotation(clazz, cpIndex, "LIntrinsicCandidate;"); // convert from char to j9utf8
+// }
 
 }

@@ -4779,6 +4779,9 @@ typedef struct J9InternalVMFunctions {
 	UDATA ( *jniIsInternalClassRef)(struct J9JavaVM *vm, jobject ref);
 	BOOLEAN (*objectIsBeingWaitedOn)(struct J9VMThread *currentThread, struct J9VMThread *targetThread, j9object_t obj);
 	BOOLEAN (*areValueBasedMonitorChecksEnabled)(struct J9JavaVM *vm);
+	BOOLEAN (*fieldContainsRuntimeAnnotation)(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
+	BOOLEAN (*methodContainsRuntimeAnnotation)(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
+	IDATA (*getConstantPoolIndexForField)(J9ROMClass *romClass, J9ROMFieldShape *romFieldShape);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */

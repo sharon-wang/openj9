@@ -24,6 +24,7 @@ set(OMR_ENHANCED_WARNINGS OFF)
 
 set_source_files_properties(${j9vm_BINARY_DIR}/vm/ut_j9vm.c PROPERTIES GENERATED TRUE)
 j9vm_add_executable(vmtest
+	annhelp_tests.c
 	resolvefield_tests.c
 	testHelpers.c
 	vmstubs.c

@@ -483,5 +483,10 @@
 			<class name="org.openj9.test.utf8ClassPkgName.LoadClassWithUTF8PkgNameTest"/>
 		</classes>
 	</test>
+	<test name="RuntimeAnnotationTests">
+		<classes>
+			<class name="org.openj9.test.annotation.ContainsRuntimeAnnotationTest"/>
+		</classes>
+	</test>
 </suite>
 <!-- Suite -->
