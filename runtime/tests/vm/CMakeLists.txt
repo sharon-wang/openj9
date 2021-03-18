@@ -76,3 +76,25 @@ install(
 	TARGETS vmtest
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
+
+j9vm_add_library(annotationtests SHARED
+	annhelp_tests.c
+)
+
+target_link_libraries(annotationtests
+	PRIVATE
+		j9vm_interface
+
+		j9util
+)
+
+omr_add_exports(annotationtests
+	Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_fieldContainsRuntimeAnnotation
+	# Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation
+)
+
+install(
+	TARGETS annotationtests
+	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
+)

@@ -26,6 +26,8 @@
 static I_32 skipAnnotationElement(J9ROMConstantPoolItem const * constantPool, U_8 const *data, U_8 const **pIndex, U_8 const * dataEnd);
 static I_32 getAnnotationByType(J9ROMConstantPoolItem const *constantPool, J9UTF8 const *searchString, U_32 const numAnnotations, U_8 const *data, U_8 const **pIndex,  U_8 const *dataEnd);
 static J9ROMFieldShape * getFieldShapeFromFieldRef(J9ROMClass *romClass, J9ROMFieldRef *romFieldRef);
+static J9ROMMethod * getMethodFromMethodRef(J9ROMClass *romClass, J9ROMMethodRef *romMethodRef);
+static BOOLEAN findRuntimeVisibleAnnotation(U_8 *data, J9UTF8 *annotationName, J9ROMConstantPoolItem *constantPool);
 
 /**
  * Walk the annotation to find the specified annotation provided as the searchString.
@@ -304,7 +306,7 @@ getMethodFromMethodRef(J9ROMClass *romClass, J9ROMMethodRef *romMethodRef)
 			break;
 		}
 
-		romFieldPtr = nextROMMethod(romMethodPtr);
+		romMethodPtr = nextROMMethod(romMethodPtr);
 	}
 
 	return romMethod;

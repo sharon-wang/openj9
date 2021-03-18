@@ -82,4 +82,27 @@
 			<library name="j9vm"/>
 		</libraries>
 	</artifact>
+	
+	<exports group="all">
+		<export name='Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_fieldContainsRuntimeAnnotation'/>
+		<!-- <export name='Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation'/> -->
+	</exports>
+
+	<artifact type="shared" name="annotationtests" appendrelease="false">
+			<options>
+			<option name="dllDescription" data="Test Annotations"/>
+		</options>
+		<phase>util</phase>
+		<includes>
+			<include path="j9include"/>
+			<include path="j9util"/>
+		</includes>
+		<makefilestubs>
+			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+			<makefilestub data="UMA_DISABLE_DDRGEN=1"/>
+		</makefilestubs>
+		<objects>
+			<object name="annhelp_tests"/>
+		</objects>
+	</artifact>
 </module>
