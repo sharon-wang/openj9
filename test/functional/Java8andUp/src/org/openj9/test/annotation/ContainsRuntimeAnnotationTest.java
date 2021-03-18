@@ -37,6 +37,14 @@ import java.lang.reflect.Method;
 
 @Test(groups = { "level.sanity" })
 public class ContainsRuntimeAnnotationTest {
+	static {
+		try {
+			System.loadLibrary("annotationtests");
+		} catch (UnsatisfiedLinkError e) {
+			Assert.fail(e.getMessage() + "\nlibrary path = " + System.getProperty("java.library.path"));
+		}
+	}
+
 	@MyFieldAnnotation
 	static int myField;
 

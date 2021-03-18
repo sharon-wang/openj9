@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2020 IBM Corp. and others
+# Copyright (c) 2021, 2021 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,57 +22,24 @@
 
 set(OMR_ENHANCED_WARNINGS OFF)
 
-set_source_files_properties(${j9vm_BINARY_DIR}/vm/ut_j9vm.c PROPERTIES GENERATED TRUE)
-j9vm_add_executable(vmtest
-	resolvefield_tests.c
-	testHelpers.c
-	vmstubs.c
-	vmtest.c
-
-	#TODO this should maybe be refactored?
-	${j9vm_SOURCE_DIR}/vm/description.c
-	${j9vm_SOURCE_DIR}/vm/KeyHashTable.c
-	${j9vm_SOURCE_DIR}/vm/ModularityHashTables.c
-	${j9vm_SOURCE_DIR}/vm/resolvefield.cpp
-	${j9vm_SOURCE_DIR}/vm/ObjectFieldInfo.cpp
-	${j9vm_SOURCE_DIR}/vm/segment.c
-	${j9vm_SOURCE_DIR}/vm/visible.c
-	${j9vm_SOURCE_DIR}/vm/vmthinit.c
-	${j9vm_SOURCE_DIR}/vm/stringhelpers.cpp
-	${j9vm_SOURCE_DIR}/vm/ValueTypeHelpers.cpp
-	${j9vm_BINARY_DIR}/vm/ut_j9vm.c
+j9vm_add_library(annotationtests SHARED
+	annhelp_tests.c
 )
-add_dependencies(vmtest trc_j9vm)
 
-target_compile_definitions(vmtest
+target_link_libraries(annotationtests
 	PRIVATE
-		J9VM_TEST
-)
-target_include_directories(vmtest PRIVATE ${j9vm_BINARY_DIR}/vm)
+		j9vm_interface
 
-target_link_libraries(vmtest
-	PRIVATE
-		j9vm_gc_includes
-		j9vm_main_wrapper
-
-		j9exelib
-		j9prt
-		j9verutil
 		j9util
-		j9utilcore
-		j9avl
-		j9hashtable
-		j9thr
-		j9stackmap
-		j9pool
-		j9simplepool
-		j9bcv
-		j9dyn
-		j9hookable
-		j9vm
+)
+
+omr_add_exports(annotationtests
+	Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_fieldContainsRuntimeAnnotation
+	# Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation
 )
 
 install(
-	TARGETS vmtest
+	TARGETS annotationtests
+	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
