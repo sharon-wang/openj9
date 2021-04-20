@@ -184,9 +184,12 @@ fieldContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotation
 
 	if (NULL != romFieldShape) {
 		U_32 *fieldAnnotationData = getFieldAnnotationsDataFromROMField(romFieldShape);
-		U_8 *data = (U_8 *) (fieldAnnotationData + 1);
 
-		annotationFound = findRuntimeVisibleAnnotation(data, annotationName, constantPool);
+		if (NULL != fieldAnnotationData) {
+			U_8 *data = (U_8 *) (fieldAnnotationData + 1);
+
+			annotationFound = findRuntimeVisibleAnnotation(data, annotationName, constantPool);
+		}
 	}
 
 	return annotationFound;
@@ -252,9 +255,12 @@ methodContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotatio
 
 	if (NULL != romMethod) {
 		U_32 *methodAnnotationData = getMethodAnnotationsDataFromROMMethod(romMethod);
-		U_8 *data = (U_8 *) (methodAnnotationData + 1);
 
-		annotationFound = findRuntimeVisibleAnnotation(data, annotationName, constantPool);
+		if (NULL != methodAnnotationData) {
+			U_8 *data = (U_8 *) (methodAnnotationData + 1);
+
+			annotationFound = findRuntimeVisibleAnnotation(data, annotationName, constantPool);
+		}
 	}
 
 	return annotationFound;
@@ -321,7 +327,7 @@ findRuntimeVisibleAnnotation(U_8 *data, J9UTF8 *annotationName, J9ROMConstantPoo
 
 	getAnnotationResult = getAnnotationByType(constantPool, annotationName, numAnnotations, data, &index, dataEnd);
 
-	if (getAnnotationResult > 0) {
+	if (getAnnotationResult >= 0) {
 		return TRUE;
 	}
 
