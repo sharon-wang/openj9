@@ -30,59 +30,106 @@ import org.testng.log4testng.Logger;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.util.Arrays;
+
+import jdk.internal.misc.SharedSecrets;
+import jdk.internal.reflect.ConstantPool;
 
 @Test(groups = { "level.sanity" })
 public class ContainsRuntimeAnnotationTest {
+	private static final String THIS_CLASS_NAME = "org/openj9/test/annotation/ContainsRuntimeAnnotationTest"; //$NON-NLS-1$
+	private final ConstantPool constantPool;
+
 	static {
 		try {
-			System.loadLibrary("annotationtests");
+			System.loadLibrary("annotationtests"); //$NON-NLS-1$
 		} catch (UnsatisfiedLinkError e) {
-			Assert.fail(e.getMessage() + "\nlibrary path = " + System.getProperty("java.library.path"));
+			Assert.fail(e.getMessage() + "\nlibrary path = " + System.getProperty("java.library.path")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
 	@MyFieldAnnotation
-	static int myField;
+	int myField = 0;
 
 	@MyMethodAnnotation
-	static void myMethod() {
-		return;
+	void myMethod() {}
+
+	public ContainsRuntimeAnnotationTest() {
+		constantPool = SharedSecrets.getJavaLangAccess().getConstantPool(this.getClass());
 	}
 
-	public ContainsRuntimeAnnotationTest() {}
-
-	private static native boolean fieldContainsRuntimeAnnotation(Field field, String annotationName);
-	// private static native boolean methodContainsRuntimeAnnotation(Method method, String annotationName);
+	private static native boolean containsRuntimeAnnotation(int cpIndex, String annotationName, boolean isField);
 
 	@Test
 	public void test_field_annotation() throws Exception {
-		Field field = this.getClass().getDeclaredField("myField"); //$NON-NLS-1$
-		String annotationName = "LMyFieldAnnotation;"; //$NON-NLS-1$
-		boolean result = fieldContainsRuntimeAnnotation(field, annotationName);
+		boolean annotationFound = false;
+		int cpIndex = getMemberCPIndex("myField", "I", true); //$NON-NLS-1$ //$NON-NLS-2$
 
-		AssertJUnit.assertTrue(result);
+		if (-1 != cpIndex) {
+			String annotationName = "MyFieldAnnotation"; //$NON-NLS-1$
+			annotationFound = containsRuntimeAnnotation(cpIndex, annotationName, true);
+		}
+
+		AssertJUnit.assertTrue(annotationFound);
 	}
 
-	// @Test
-	// public void test_method_annotation() throws Exception {
-	// 	Method method = this.getClass().getDeclaredMethod("myMethod"); //$NON-NLS-1$
-	// 	String annotationName = "LMyMethodAnnotation;"; //$NON-NLS-1$
-	// 	boolean result = methodContainsRuntimeAnnotation(method, annotationName);
+	@Test
+	public void test_method_annotation() throws Exception {
+		boolean annotationFound = false;
 
-	// 	AssertJUnit.assertTrue(result);
-	// }
+		// Call the method so it shows up in the constant pool
+		myMethod();
+
+		int cpIndex = getMemberCPIndex("myMethod", "()V", false); //$NON-NLS-1$ //$NON-NLS-2$
+
+		if (-1 != cpIndex) {
+			String annotationName = "MyMethodAnnotation"; //$NON-NLS-1$
+			annotationFound = containsRuntimeAnnotation(cpIndex, annotationName, false);
+		}
+
+		AssertJUnit.assertTrue(annotationFound);
+	}
+
+	private int getMemberCPIndex(String memberName, String memberType, boolean isField) {
+		int cpIndex = -1;
+
+		for (int i = constantPool.getSize() - 1; i >= 0; i--) {
+			try {
+				if (isField) {
+					// If this doesn't fail, then the item at index i in the constant pool is a field
+					constantPool.getFieldAt(i);
+				} else {
+					// Assumes the member is a method
+					// If this doesn't fail, then the item at index i in the constant pool is a method
+					constantPool.getMethodAt(i);
+				}
+
+				// Returns 3-element array of class name, member name and type
+				String [] cpMemberInfo = constantPool.getMemberRefInfoAt(i);
+
+				if (THIS_CLASS_NAME.equals(cpMemberInfo[0])
+					&& memberName.equals(cpMemberInfo[1])
+					&& memberType.equals(cpMemberInfo[2])
+				) {
+					cpIndex = i;
+					break;
+				}
+			} catch (Throwable ignored) {
+				// Ignore errors if the constant pool entry doesn't exist
+			}
+		}
+
+		return cpIndex;
+	}
 }
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-@interface MyFieldAnnotation {
-}
+@interface MyFieldAnnotation {}
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-@interface MyMethodAnnotation {
-}
+@interface MyMethodAnnotation {}

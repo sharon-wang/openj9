@@ -23,56 +23,58 @@
 #include "vmaccess.h"
 
 /**
- * 
+ * Checks if a field or method contains the runtime annotation specified.
+ *
+ * @param env The JNI environment.
+ * @param jlClass The class that the field or method belongs to.
+ * @param cpIndex The constant pool index of the field or method.
+ * @param annotationNameString The name of the annotation to check for.
+ * @param isField True if checking for a field, false if checking a method.
+ * @return JNI_TRUE if the annotation is found, JNI_FALSE otherwise.
  */
 jboolean JNICALL
-Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_fieldContainsRuntimeAnnotation(JNIEnv *env, jclass jlClass, jobject jlrField, jstring annotationNameString)
+Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnnotation(JNIEnv *env, jclass jlClass, jint cpIndex, jstring annotationNameString, jboolean isField)
 {
-	jboolean result = FALSE;
-	j9object_t fieldObject = NULL;
+	jboolean result = JNI_FALSE;
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	char fieldAnnotationNameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH] = {0};
-	J9UTF8 *annotationNameUTF8 = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if (NULL == annotationNameString) {
 		vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "annotation name is null");
 	} else {
 		vmFuncs->internalEnterVMFromJNI(vmThread);
-		fieldObject = J9_JNI_UNWRAP_REFERENCE(jlrField);
 
-		if (NULL != fieldObject) {
-			j9object_t annotationNameObj = J9_JNI_UNWRAP_REFERENCE(annotationNameString);
+		j9object_t annotationNameObj = J9_JNI_UNWRAP_REFERENCE(annotationNameString);
+		char annotationNameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH] = {0};
+		J9UTF8 *annotationNameUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(
+			vmThread,
+			annotationNameObj,
+			J9_STR_NULL_TERMINATE_RESULT,
+			"",
+			0,
+			annotationNameStackBuffer,
+			0
+		);
 
-			annotationNameUTF8 = vmFuncs->copyStringToJ9UTF8WithMemAlloc(
-				vmThread,
-				annotationNameObj,
-				J9_STR_NULL_TERMINATE_RESULT,
-				"",
-				0,
-				fieldAnnotationNameStackBuffer,
-				0
-			);
+		if (NULL == annotationNameUTF8) {
+			vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+		} else {
+			J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(jlClass));
 
-			if (NULL == annotationNameUTF8) {
-				vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+			if (NULL == clazz) {
+				vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "class cannot be found");
 			} else {
-				J9JNIFieldID *fieldID = vmThread->javaVM->reflectFunctions.idFromFieldObject(vmThread, NULL, fieldObject);
-				J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(jlClass));
-				J9ROMFieldShape *fieldShape = fieldID->field;
-				IDATA cpIndex = getConstantPoolIndexForField(clazz->romClass, fieldShape);
-
-				if (cpIndex < 0) {
-					vmFuncs->setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "field cannot be found");
-				} else {
+				if (isField) {
 					result = (jboolean) fieldContainsRuntimeAnnotation(clazz, (UDATA) cpIndex, annotationNameUTF8);
+				} else {
+					result = (jboolean) methodContainsRuntimeAnnotation(clazz, (UDATA) cpIndex, annotationNameUTF8);
 				}
+			}
 
-				if ((J9UTF8 *) fieldAnnotationNameStackBuffer != annotationNameUTF8) {
-					j9mem_free_memory(annotationNameUTF8);
-				}
+			if ((J9UTF8 *) annotationNameStackBuffer != annotationNameUTF8) {
+				j9mem_free_memory(annotationNameUTF8);
 			}
 		}
 
@@ -81,12 +83,3 @@ Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_fieldContainsRunti
 
 	return result;
 }
-
-/**
- * 
- */
-// jboolean JNICALL
-// Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation(JNIEnv *env, jclass clazz, jstring childNameString, jstring parentNameString, jobject classLoaderObject)
-// {
-
-// }

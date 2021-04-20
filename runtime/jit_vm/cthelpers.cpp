@@ -181,19 +181,28 @@ jitGetConstantDynamicTypeFromCP(J9VMThread *currentThread, J9ConstantPool *const
 	return sigUTF;
 }
 
-// bool
-// jitIsFieldStable(J9Class *clazz, UDATA cpIndex) {
-// 	return fieldContainsRuntimeAnnotation(clazz, cpIndex, "LStable;"); // convert from char to j9utf8
-// }
+bool
+jitIsFieldStable(J9Class *clazz, UDATA cpIndex) {
+	J9UTF8 *annotationName = (J9UTF8 *) "Stable";
+	J9UTF8_SET_LENGTH(annotationName, 7);
 
-// bool
-// isMethodTaggedWithForceInline(J9Class *clazz, UDATA cpIndex) {
-// 	// return methodContainsRuntimeAnnotation(clazz, cpIndex, "LForceInline;"); // convert from char to j9utf8
-// }
+	return fieldContainsRuntimeAnnotation(clazz, cpIndex, annotationName);
+}
 
-// bool
-// isMethodTaggedWithIntrinsicCandidate(J9Class *clazz, UDATA cpIndex) {
-// 	// return methodContainsRuntimeAnnotation(clazz, cpIndex, "LIntrinsicCandidate;"); // convert from char to j9utf8
-// }
+bool
+jitIsMethodTaggedWithForceInline(J9Class *clazz, UDATA cpIndex) {
+	J9UTF8 *annotationName = (J9UTF8 *) "ForceInline";
+	J9UTF8_SET_LENGTH(annotationName, 12);
+
+	return methodContainsRuntimeAnnotation(clazz, cpIndex, annotationName);
+}
+
+bool
+jitIsMethodTaggedWithIntrinsicCandidate(J9Class *clazz, UDATA cpIndex) {
+	J9UTF8 *annotationName = (J9UTF8 *) "IntrinsicCandidate";
+	J9UTF8_SET_LENGTH(annotationName, 19);
+
+	return methodContainsRuntimeAnnotation(clazz, cpIndex, annotationName);
+}
 
 }

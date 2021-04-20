@@ -22,6 +22,7 @@
 
 #include "cfreader.h"
 #include "j9protos.h"
+#include "ut_j9vmutil.h"
 
 static I_32 skipAnnotationElement(J9ROMConstantPoolItem const * constantPool, U_8 const *data, U_8 const **pIndex, U_8 const * dataEnd);
 static I_32 getAnnotationByType(J9ROMConstantPoolItem const *constantPool, J9UTF8 const *searchString, U_32 const numAnnotations, U_8 const *data, U_8 const **pIndex,  U_8 const *dataEnd);
@@ -168,10 +169,18 @@ BOOLEAN
 fieldContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName)
 {
 	BOOLEAN annotationFound = FALSE;
-	J9ROMClass *romClass = clazz->romClass;
-	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(clazz->romClass);
-	J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *) &constantPool[cpIndex];
-	J9ROMFieldShape *romFieldShape = getFieldShapeFromFieldRef(romClass, romFieldRef);
+	J9ROMClass *romClass = NULL;
+	J9ROMConstantPoolItem *constantPool = NULL;
+	J9ROMFieldRef *romFieldRef = NULL;
+	J9ROMFieldShape *romFieldShape = NULL;
+
+	Assert_VMUtil_true(NULL != clazz);
+	Assert_VMUtil_true(NULL != annotationName);
+
+	romClass = clazz->romClass;
+	constantPool = J9_ROM_CP_FROM_ROM_CLASS(clazz->romClass);
+	romFieldRef = (J9ROMFieldRef *) &constantPool[cpIndex];
+	romFieldShape = getFieldShapeFromFieldRef(romClass, romFieldRef);
 
 	if (NULL != romFieldShape) {
 		U_32 *fieldAnnotationData = getFieldAnnotationsDataFromROMField(romFieldShape);
@@ -217,43 +226,6 @@ getFieldShapeFromFieldRef(J9ROMClass *romClass, J9ROMFieldRef *romFieldRef)
 }
 
 /**
- * Get the corresponding constant pool index for a given J9ROMFieldShape.
- *
- * @param romClass The ROM Class the field belongs to.
- * @param romFieldShape The field to grab the constant pool index for.
- * @return The constant pool index for the field, or -1 if the index is not found.
- */
-IDATA
-getConstantPoolIndexForField(J9ROMClass *romClass, J9ROMFieldShape *romFieldShape)
-{
-	U_16 cpCount = romClass->romConstantPoolCount;
-	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
-	U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
-	BOOLEAN cpIndexFound = FALSE;
-	IDATA cpIndex;
-
-	for (cpIndex = 1; cpIndex < cpCount; cpIndex++) {
-		J9ROMConstantPoolItem *cpItem = constantPool + cpIndex;
-		U_32 cpType = J9_CP_TYPE(cpShapeDescription, cpIndex);
-
-		if (J9CPTYPE_FIELD == cpType) {
-			J9ROMFieldShape *fieldShape = getFieldShapeFromFieldRef(romClass, (J9ROMFieldRef *) cpItem);
-
-			if (romFieldShape == fieldShape) {
-				cpIndexFound = TRUE;
-				break;
-			}
-		}
-	}
-
-	if (!cpIndexFound) {
-		cpIndex = -1;
-	}
-
-	return cpIndex;
-}
-
-/**
  * Check if a method contains the specified Runtime Visible annotation.
  *
  * @param clazz The class the method belongs to.
@@ -265,10 +237,18 @@ BOOLEAN
 methodContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName)
 {
 	BOOLEAN annotationFound = FALSE;
-	J9ROMClass *romClass = clazz->romClass;
-	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(clazz->romClass);
-	J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *) &constantPool[cpIndex];
-	J9ROMMethod *romMethod = getMethodFromMethodRef(romClass, romMethodRef);
+	J9ROMClass *romClass = NULL;
+	J9ROMConstantPoolItem *constantPool = NULL;
+	J9ROMMethodRef *romMethodRef = NULL;
+	J9ROMMethod *romMethod = NULL;
+
+	Assert_VMUtil_true(NULL != clazz);
+	Assert_VMUtil_true(NULL != annotationName);
+
+	romClass = clazz->romClass;
+	constantPool = J9_ROM_CP_FROM_ROM_CLASS(clazz->romClass);
+	romMethodRef = (J9ROMMethodRef *) &constantPool[cpIndex];
+	romMethod = getMethodFromMethodRef(romClass, romMethodRef);
 
 	if (NULL != romMethod) {
 		U_32 *methodAnnotationData = getMethodAnnotationsDataFromROMMethod(romMethod);
@@ -298,8 +278,8 @@ getMethodFromMethodRef(J9ROMClass *romClass, J9ROMMethodRef *romMethodRef)
 	U_32 i;
 
 	for (i = 0; (i < romClass->romMethodCount) && (NULL != romMethodPtr); i++) {
-		J9UTF8 *methodName = J9ROMFIELDSHAPE_NAME(romMethodPtr);
-		J9UTF8 *methodSignature = J9ROMFIELDSHAPE_SIGNATURE(romMethodPtr);
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethodPtr);
+		J9UTF8 *methodSignature = J9ROMMETHOD_SIGNATURE(romMethodPtr);
 
 		if (J9UTF8_EQUALS(methodRefName, methodName) && J9UTF8_EQUALS(methodRefSignature, methodSignature)) {
 			romMethod = romMethodPtr;
@@ -348,254 +328,3 @@ findRuntimeVisibleAnnotation(U_8 *data, J9UTF8 *annotationName, J9ROMConstantPoo
 _errorFound:
 	return FALSE;
 }
-
-
-
-// FROM VMHELPERS
-// #define GETNEXT_U32(value, index) (value = *(U_32*)index, index += 4, value)
-// #define GETNEXT_U16(value, index) (value = *(U_16*)index, index += 2, value)
-// #define GETNEXT_U8(value, index) (value = *(index++))
-
-	// /**
-	//  * Determine if the field is stable (annotated with @Stable).
-	//  *
-	//  * If the field is stable and its static type is an array, then all the array
-	//  * elements are considered to be stable as well.
-	//  *
-	//  * @param clazz the class that owns the field
-	//  * @param cpindex the cpindex of the field to query
-	//  * @return true if the field is stable, false otherwise
-	//  */
-	// static VMINLINE bool
-	// isFieldStable(J9Class *clazz, UDATA cpIndex)
-	// {
-	// 	bool isStable = false;
-	// 	// J9ConstantPool *constantPool = clazz->ramConstantPool->romConstantPool;
-	// 	// J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *) &constantPool[cpIndex];
-	// 	// J9ROMFieldShape *romField = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
-	// 	// U_32 *fieldAnnotationData = getFieldAnnotationsDataFromROMField(romField);
-
-	// 	// J9ROMFieldRef VS J9ROMFieldShape????
-
-	// 	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(clazz->romClass);
-	// 	J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *) &constantPool[cpIndex];
-	// 	J9ROMNameAndSignature *fieldNameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
-	// 	J9ROMFieldShape* romField = J9ROMCLASS_ROMFIELDS(clazz->romClass);
-
-	// 	J9ROMCLASS_ROMFIELDS(base) NNSRP_GET((base)->romFields, struct J9ROMFieldShape*)
-
-	// 	typedef struct J9ROMConstantPoolItem {
-	// 		U_32 slot1;
-	// 		U_32 slot2;
-	// 	} J9ROMConstantPoolItem;
-
-	// 	typedef struct J9ROMFieldRef {
-	// 		U_32 classRefCPIndex;
-	// 		J9SRP nameAndSignature;
-	// 	} J9ROMFieldRef;
-
-	// 	typedef struct J9ROMFieldShape {
-	// 		struct J9ROMNameAndSignature nameAndSignature;
-	// 		U_32 modifiers;
-	// 	} J9ROMFieldShape;
-
-	// 	// take field ref name
-	// 	// iterate through field shape names until you find the one that matches
-
-	// 	// getFieldAnnotationsDataFromROMField needs J9ROMFieldShape
-	// 	U_32 *fieldAnnotationData = getFieldAnnotationsDataFromROMField(romField);
-
-	// 	if (NULL != fieldAnnotationData) {
-	// 		isStable = containsRuntimeAnnotation(constantPool, fieldAnnotationData, "Stable");
-	// 	}
-
-	// 	// j9tty_printf( PORTLIB, "  Name: %i -> %s\n", field->nameIndex, classfile->constantPool[field->nameIndex].bytes);
-	// 	// j9tty_printf( PORTLIB, "  Signature: %i -> %s\n", field->descriptorIndex, classfile->constantPool[field->descriptorIndex].bytes);
-	// 	// j9tty_printf( PORTLIB, "  Access Flags: 0x%X ( ", field->accessFlags);
-	// 	// printModifiers(PORTLIB, field->accessFlags, INCLUDE_INTERNAL_MODIFIERS, MODIFIERSOURCE_FIELD);
-	// 	// j9tty_printf( PORTLIB, " )\n");
-	// 	// j9tty_printf( PORTLIB, "  Attributes (%i):\n", field->attributesCount);
-	// 	// for(i = 0; i < field->attributesCount; i++)
-	// 	// {
-	// 	// 	dumpAttribute(classfile, field->attributes[i], 2);
-	// 	// }
-
-	// 	return isStable;
-	// }
-
-	// /**
-	//  * Determine if the method is tagged with ForceInline (annotated with @ForceInline).
-	//  *
-	//  * @param clazz the class that owns the field
-	//  * @param cpindex the cpindex of the method to query
-	//  * @return true if the method is tagged with ForceInline, false otherwise
-	//  */
-	// static VMINLINE bool
-	// isMethodTaggedWithForceInline(J9Class *clazz, UDATA cpIndex)
-	// {
-	// 	bool forceInline = false;
-
-	// 	J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(clazz->romClass);
-	// 	J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *) &constantPool[cpIndex];
-	// 	J9ROMNameAndSignature *fieldNameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romMethodRef);
-
-	// 	// iterate methods in the class and match the name and sig to the methodref name and sig
-	// 	// J9ROMMethod
-	// 	U_32 *fieldAnnotationData = getMethodAnnotationsDataFromROMMethod(romField);
-
-	// 	if (NULL != fieldAnnotationData) {
-	// 		forceInline = containsRuntimeAnnotation(constantPool, fieldAnnotationData, "ForceInline");
-	// 	}
-
-	// 	return forceInline;
-	// }
-
-	// /**
-	//  * Check if the annotation data contains the requested annotation.
-	//  *
-	//  * @param constantPool The constant pool, to grab info about annotation data indices.
-	//  * @param annotationData Pointer to RuntimeVisibleAnnotations_attribute data.
-	//  * @param requestedAnnotation The name of the annotation to check for.
-	//  * @return true if the annotation data contains the requested annotation, false otherwise.
-	//  */
-	// static VMINLINE bool
-	// containsRuntimeAnnotation(const J9ConstantPool *constantPool, const U_32 *annotationData, const U_8 *requestedAnnotation)
-	// {
-	// 	bool containsAnnotation = false;
-	// 	U_32 annotationDataLength = annotationData[0];
-	// 	U_8 *annotationDataPtr = (U_8 *) (annotationData + 1);
-	// 	UDATA annotationDataIndex = 0;
-	// 	U_16 numAnnotations = 0;
-	// 	U_32 i = 0;
-
-	// 	/* value: attribute_name_index is U_16 */
-	// 	GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 	/* value: attribute_length is U_32 */
-	// 	GETNEXT_U32(annotationDataIndex, annotationDataPtr);
-	// 	/* value: num_annotations is U_16 */
-	// 	numAnnotations = GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-
-	// 	/* array: annotations contains annotation structures */
-	// 	for (i = 0; i < numAnnotations; i++) {
-	// 		/* structure: annotation contains type_index, num_element_value_pairs and structure element_value_pairs */
-	// 		/* value: type_index is U_16 */
-	// 		U_16 annotationTypeIndex = GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 		/* structure: CONSTANT_Utf8_info contains tag, length and array bytes */
-	// 		U_8 *annotationUtf8Info = &(constantPool[annotationTypeIndex]);
-	// 		U_8 annotationUtf8InfoIndex = 0;
-	// 		U_16 annotationNameLength = 0;
-	// 		U_8 *annotationName = NULL;
-
-	// 		/* value: tag is U_8 */
-	// 		GETNEXT_U8(annotationUtf8InfoIndex, annotationUtf8Info);
-	// 		/**
-	// 		 * Exclude the leading type indicator and trailing semicolon of field descriptor
-	// 		 * i.e. LClassName; --> ClassName
-	// 		 */
-	// 		/* value: length is U_16 */
-	// 		annotationNameLength = GETNEXT_U16(annotationUtf8InfoIndex, annotationUtf8Info) - 2;
-	// 		annotationName = annotationUtf8Info + 1;
-
-	// 		if ((0 == memcmp(annotationName, requestedAnnotation, annotationNameLength)) {
-	// 			containsAnnotation = true;
-	// 			break;
-	// 		}
-
-	// 		walkAnnotation(annotationDataIndex, annotationDataPtr);
-
-	// 		/* value: num_element_value_pairs is U_16 */
-	// 		U_16 numElementValuePairs = GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 		U_32 i = 0;
-
-	// 		/* array: element_value_pairs contains a U_16 and an element_value */
-	// 		for (i = 0; i < numElementValuePairs; i++) {
-	// 			/* value: element_name_index is U_16 */
-	// 			GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 			/* walk element_value structure */
-	// 			walkAnnotationElementValue(annotationDataIndex, annotationDataPtr);
-	// 		}
-	// 	}
-
-	// 	return containsAnnotation;
-	// }
-
-	// /**
-	//  * Walk through an annotation's element_value_pairs structure.
-	//  *
- 	//  * @param annotationDataIndex The index into the annotation data.
-	//  * @param annotationDataPtr Pointer to the annotation data.
-	//  */
-	// static VMINLINE void walkAnnotation(U_32 annotationDataIndex, U_8 *annotationDataPtr)
-	// {
-	// 	/* value: num_element_value_pairs is U_16 */
-	// 	U_16 numElementValuePairs = GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 	U_32 i = 0;
-
-	// 	/* array: element_value_pairs contains a U_16 and an element_value */
-	// 	for (i = 0; i < numElementValuePairs; i++) {
-	// 		/* value: element_name_index is U_16 */
-	// 		GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 		/* walk element_value structure */
-	// 		walkAnnotationElementValue(annotationDataIndex, annotationDataPtr);
-	// 	}
-	// }
-
-	// /**
-	//  * Walk through an element_value structure.
-	//  *
- 	//  * @param annotationDataIndex The index into the annotation data.
-	//  * @param annotationDataPtr Pointer to the annotation data.
-	//  */
-	// static VMINLINE void walkAnnotationElementValue(U_32 annotationDataIndex, U_8 *annotationDataPtr)
-	// {
-	// 	/* structure: element_value contains tag and a union of the types outlined in the Switch below */
-	// 	/* value: tag is a U_8 */
-	// 	U_8 elementValueTag = GETNEXT_U8(annotationDataIndex, annotationDataPtr);
-
-	// 	/* Based on the element_value tag, determine the value of the element_value's union */
-	// 	switch (elementValueTag) {
-	// 		/* value: const_value_index is U_16 */
-	// 		case 'B':
-	// 		case 'C':
-	// 		case 'D':
-	// 		case 'F':
-	// 		case 'I':
-	// 		case 'J':
-	// 		case 'S':
-	// 		case 'Z':
-	// 		case 's':
-	// 		/* value: class_info_index is U_16 */
-	// 		case 'c':
-	// 			GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 			break;
-	// 		/* structure: enum_const_value contains type_name_index and const_name_index */
-	// 		case 'e': {
-	// 			/* value: type_name_index is U_16 */
-	// 			GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 			/* value: const_name_index is U_16 */
-	// 			GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 			break;
-	// 		}
-	// 		/* value: annotation_value is an annotation type */
-	// 		case '@': {
-	// 			/* value: type_index is U_16 */
-	// 			GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 			/* walk annotation structure */
-	// 			walkAnnotation(annotationDataIndex, annotationDataPtr);
-	// 			break;
-	// 		}
-	// 		/* structure: array_value contains num_values and values[num_values] */
-	// 		case '[': {
-	// 			/* value: num_values is U_16 */
-	// 			U_16 numValues = GETNEXT_U16(annotationDataIndex, annotationDataPtr);
-	// 			U_32 i = 0;
-	// 			for (i = 0; i < numValues; i++) {
-	// 				/* walk element_value structure */
-	// 				walkAnnotationElementValue(annotationDataIndex, annotationDataPtr);
-	// 			}
-	// 			break;
-	// 		}
-	// 		default:
-	// 			break;
-	// 	}
-	// }

@@ -71,33 +71,26 @@ alignedBackwardsMemcpy(J9VMThread *vmStruct, void *dest, void *source, UDATA byt
 /* ---------------- annhelp.c ---------------- */
 
 /**
-* @brief
-* @param clazz
-* @param cpIndex
-* @param annotationName
-* @return true if...
-*/
+ * Check if a field contains the specified Runtime Visible annotation.
+ *
+ * @param clazz The class the field belongs to.
+ * @param cpIndex The constant pool index of the field.
+ * @param annotationName The name of the annotation to check for.
+ * @return TRUE if the annotation is found, FALSE otherwise.
+ */
 BOOLEAN
 fieldContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
 
 /**
-* @brief
-* @param clazz
-* @param cpIndex
-* @param annotationName
-* @return true if...
-*/
+ * Check if a method contains the specified Runtime Visible annotation.
+ *
+ * @param clazz The class the method belongs to.
+ * @param cpIndex The constant pool index of the method.
+ * @param annotationName The name of the annotation to check for.
+ * @return TRUE if the annotation is found, FALSE otherwise.
+ */
 BOOLEAN
 methodContainsRuntimeAnnotation(J9Class *clazz, UDATA cpIndex, J9UTF8 *annotationName);
-
-/**
-* @brief
-* @param romClass
-* @param romFieldShape
-* @return The constant pool index or -1 if error
-*/
-IDATA
-getConstantPoolIndexForField(J9ROMClass *romClass, J9ROMFieldShape *romFieldShape);
 
 /* ---------------- argbits.c ---------------- */
 

@@ -398,6 +398,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	objectIsBeingWaitedOn,
 	areValueBasedMonitorChecksEnabled,
 	fieldContainsRuntimeAnnotation,
-	methodContainsRuntimeAnnotation,
-	getConstantPoolIndexForField
+	methodContainsRuntimeAnnotation
 };

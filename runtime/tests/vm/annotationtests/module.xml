@@ -24,8 +24,7 @@
 
 <module>
 	<exports group="all">
-		<export name='Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_fieldContainsRuntimeAnnotation'/>
-		<!-- <export name='Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_methodContainsRuntimeAnnotation'/> -->
+		<export name='Java_org_openj9_test_annotation_ContainsRuntimeAnnotationTest_containsRuntimeAnnotation'/>
 	</exports>
 
 	<artifact type="shared" name="annotationtests" appendrelease="false">
