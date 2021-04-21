@@ -69,7 +69,7 @@ public class ContainsRuntimeAnnotationTest {
 		int cpIndex = getMemberCPIndex("myField", "I", true); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (-1 != cpIndex) {
-			String annotationName = "MyFieldAnnotation"; //$NON-NLS-1$
+			String annotationName = "Lorg/openj9/test/annotation/MyFieldAnnotation;"; //$NON-NLS-1$
 			annotationFound = containsRuntimeAnnotation(cpIndex, annotationName, true);
 		}
 
@@ -86,7 +86,7 @@ public class ContainsRuntimeAnnotationTest {
 		int cpIndex = getMemberCPIndex("myMethod", "()V", false); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (-1 != cpIndex) {
-			String annotationName = "MyMethodAnnotation"; //$NON-NLS-1$
+			String annotationName = "Lorg/openj9/test/annotation/MyMethodAnnotation;"; //$NON-NLS-1$
 			annotationFound = containsRuntimeAnnotation(cpIndex, annotationName, false);
 		}
 
