@@ -58,6 +58,13 @@ getAnnotationByType(J9ROMConstantPoolItem const *constantPool, J9UTF8 const *sea
 		CHECK_EOF(2);
 		NEXT_U16(annTypeIndex, index); /* annotation type_index */
 		className = J9ROMCLASSREF_NAME((J9ROMClassRef*)constantPool+annTypeIndex);
+
+		// START DEBUG SECTION
+		char * abc = (char *) J9UTF8_DATA(className);
+		fprintf(stderr, "\t***DEBUG in %s: at: %d in: %s -- className %s\n", __FILE__, __LINE__, __FUNCTION__, abc);
+		// this is printing out "myField", which is the name of the field itself
+		// END DEBUG SECTION
+
 		CHECK_EOF(2);
 		NEXT_U16(numElementValuePairs, index); /* annotation num_element_value_pairs */
 
@@ -317,15 +324,53 @@ findRuntimeVisibleAnnotation(U_8 *data, J9UTF8 *annotationName, J9ROMConstantPoo
 	U_32 numAnnotations = 0;
 	I_32 getAnnotationResult = -1;
 
+	// INVESTIGATE HERE
+	// 'data' is not pointing to the right place, or at least it is pointing to somewhere not expected
+
+	// START DEBUGGING SECTION -- code below is for debugging purposes
 	CHECK_EOF(2);
-	data += 2; /* skip attribute_name_index */
+	U_16 currentIndex = 0;
+	NEXT_U16(currentIndex, index); // name_index
+	J9UTF8* attributeName = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) &constantPool[currentIndex]);
+	char * abc = (char *) J9UTF8_DATA(attributeName);
+	fprintf(stderr, "\t***DEBUG in %s: at: %d in: %s -- attributeName %s\n", __FILE__, __LINE__, __FUNCTION__, abc);
+
+	NEXT_U16(currentIndex, index); // descriptor_index
+
+	J9UTF8* descutf = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *) &constantPool[currentIndex]);
+	char * bbb = (char *) J9UTF8_DATA(descutf);
+	fprintf(stderr, "\t***DEBUG in %s: at: %d in: %s -- descutf %s\n", __FILE__, __LINE__, __FUNCTION__, bbb);
+
+	NEXT_U16(currentIndex, index); // attributes_count
+
+	fprintf(stderr, "\t***DEBUG in %s: at: %d in: %s -- attribute count %d\n", __FILE__, __LINE__, __FUNCTION__, currentIndex);
+
 	CHECK_EOF(4);
 	NEXT_U32(attributeLength, index); /* attribute_length */
+	fprintf(stderr, "\t***DEBUG in %s: at: %d in: %s -- attribute length %d\n", __FILE__, __LINE__, __FUNCTION__, attributeLength);
 	dataEnd = data + attributeLength;
 	CHECK_EOF(2);
 	NEXT_U16(numAnnotations, index); /* num_annotations */
 
-	getAnnotationResult = getAnnotationByType(constantPool, annotationName, numAnnotations, data, &index, dataEnd);
+	fprintf(stderr, "\t***DEBUG in %s: at: %d in: %s -- num_annotations %d\n", __FILE__, __LINE__, __FUNCTION__, numAnnotations);
+
+	getAnnotationResult = getAnnotationByType(constantPool, annotationName, 1, data, &index, dataEnd);
+
+	// END DEBUGGING SECTION
+
+	// START PREVIOUS CODE, commented out for debugging
+
+	// CHECK_EOF(2);
+	// data += 2; /* skip attribute_name_index */
+	// CHECK_EOF(4);
+	// NEXT_U32(attributeLength, index); /* attribute_length */
+	// dataEnd = data + attributeLength;
+	// CHECK_EOF(2);
+	// NEXT_U16(numAnnotations, index); /* num_annotations */
+
+	// getAnnotationResult = getAnnotationByType(constantPool, annotationName, numAnnotations, data, &index, dataEnd);
+
+	// END PREVIOUS CODE, commented out for debugging
 
 	if (getAnnotationResult >= 0) {
 		return TRUE;
